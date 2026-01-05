@@ -28,18 +28,18 @@ const TendenciaQualidade = ({ dataInicio, dataFim }: TendenciaQualidadeProps) =>
     // Agrupar por data
     const porData = new Map<string, {
       totalProduzido: number;
-      unidadesBoas: number;
+      defeitos: number;
       bloqueados: number;
     }>();
 
     // Agregar registros de produção
     registros.forEach((registro) => {
       const data = registro.data;
-      const existing = porData.get(data) || { totalProduzido: 0, unidadesBoas: 0, bloqueados: 0 };
+      const existing = porData.get(data) || { totalProduzido: 0, defeitos: 0, bloqueados: 0 };
       porData.set(data, {
         ...existing,
         totalProduzido: existing.totalProduzido + registro.total_produzido,
-        unidadesBoas: existing.unidadesBoas + registro.unidades_boas,
+        defeitos: existing.defeitos + registro.defeitos,
       });
     });
 
@@ -58,7 +58,8 @@ const TendenciaQualidade = ({ dataInicio, dataFim }: TendenciaQualidadeProps) =>
     // Converter para array e calcular qualidade
     return Array.from(porData.entries())
       .map(([data, valores]) => {
-        const unidadesBonsFinal = Math.max(0, valores.unidadesBoas - valores.bloqueados);
+        // Qualidade = (total - defeitos - bloqueados) / total * 100
+        const unidadesBonsFinal = Math.max(0, valores.totalProduzido - valores.defeitos - valores.bloqueados);
         const qualidade = valores.totalProduzido > 0 
           ? (unidadesBonsFinal / valores.totalProduzido) * 100 
           : 100;
@@ -68,6 +69,7 @@ const TendenciaQualidade = ({ dataInicio, dataFim }: TendenciaQualidadeProps) =>
           dataFormatada: format(new Date(data + 'T00:00:00'), 'dd/MM', { locale: ptBR }),
           qualidade: Number(qualidade.toFixed(1)),
           bloqueados: valores.bloqueados,
+          defeitos: valores.defeitos,
           totalProduzido: valores.totalProduzido,
         };
       })

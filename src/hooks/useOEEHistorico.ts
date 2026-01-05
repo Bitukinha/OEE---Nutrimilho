@@ -110,7 +110,7 @@ export const useOEEHistorico = (dias: number = 30) => {
           const tempoDisp = Math.max(0, r.tempo_real - paradasProp);
           const capEsperada = (r.capacidade_hora || 100) * (tempoDisp / 60);
           const perf = capEsperada > 0 ? Math.min((r.total_produzido / capEsperada) * 100, 100) : 0;
-          const unidadesBoas = Math.max(0, r.unidades_boas - bloqProp);
+          const unidadesBoas = Math.max(0, r.total_produzido - r.defeitos - bloqProp);
           const qual = r.total_produzido > 0 ? Math.max(0, (unidadesBoas / r.total_produzido) * 100) : 0;
 
           totalDisp += disp;
@@ -154,7 +154,7 @@ export const useOEEHistorico = (dias: number = 30) => {
             const tempoDisp = Math.max(0, r.tempo_real - paradasProp);
             const capEsperada = (r.capacidade_hora || 100) * (tempoDisp / 60);
             const perf = capEsperada > 0 ? Math.min((r.total_produzido / capEsperada) * 100, 100) : 0;
-            const unidadesBoas = Math.max(0, r.unidades_boas - bloqProp);
+            const unidadesBoas = Math.max(0, r.total_produzido - r.defeitos - bloqProp);
             const qual = r.total_produzido > 0 ? Math.max(0, (unidadesBoas / r.total_produzido) * 100) : 0;
 
             totalDisp += disp;

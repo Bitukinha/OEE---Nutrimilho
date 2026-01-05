@@ -61,7 +61,11 @@ export const useProdutosBloqueados = (filters?: { dataInicio?: string; dataFim?:
       
       const { data, error } = await query;
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar produtos bloqueados:', error);
+        throw error;
+      }
+      console.log('Produtos bloqueados carregados:', data?.length || 0);
       return data as ProdutoBloqueado[];
     },
   });

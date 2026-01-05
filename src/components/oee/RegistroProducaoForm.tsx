@@ -34,7 +34,6 @@ const registroSchema = z.object({
   tempo_real: z.number().min(0, 'Tempo real não pode ser negativo'),
   capacidade_hora: z.number().min(1, 'Capacidade deve ser maior que 0'),
   total_produzido: z.number().min(0, 'Total produzido não pode ser negativo'),
-  unidades_boas: z.number().min(0, 'Unidades boas não pode ser negativo'),
   defeitos: z.number().min(0, 'Defeitos não pode ser negativo'),
   observacoes: z.string().optional(),
 });
@@ -64,7 +63,6 @@ const RegistroProducaoForm = () => {
       tempo_real: 700,
       capacidade_hora: 100,
       total_produzido: 0,
-      unidades_boas: 0,
       defeitos: 0,
       observacoes: '',
     },
@@ -72,26 +70,22 @@ const RegistroProducaoForm = () => {
 
   const selectedEquipamentoId = watch('equipamento_id');
   const totalProduzido = watch('total_produzido');
-  const unidadesBoas = watch('unidades_boas');
+  const defeitos = watch('defeitos');
 
-  // Auto-calculate defeitos
+  // Auto-calculate defeitos when total changes
   const handleTotalChange = (value: number) => {
     setValue('total_produzido', value);
-    if (unidadesBoas > value) {
-      setValue('unidades_boas', value);
+    if (defeitos > value) {
       setValue('defeitos', 0);
-    } else {
-      setValue('defeitos', value - unidadesBoas);
     }
   };
 
-  const handleUnidadesBoasChange = (value: number) => {
+  // Validate defeitos don't exceed total
+  const handleDefeitosChange = (value: number) => {
     if (value > totalProduzido) {
-      setValue('unidades_boas', totalProduzido);
-      setValue('defeitos', 0);
+      setValue('defeitos', totalProduzido);
     } else {
-      setValue('unidades_boas', value);
-      setValue('defeitos', totalProduzido - value);
+      setValue('defeitos', value);
     }
   };
 
@@ -219,7 +213,7 @@ const RegistroProducaoForm = () => {
 
           <div className="border-t border-border pt-4">
             <h4 className="font-medium text-sm text-muted-foreground mb-3">Produção</h4>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="total_produzido">Total Produzido</Label>
                 <Input
@@ -230,22 +224,12 @@ const RegistroProducaoForm = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="unidades_boas">Unidades Boas</Label>
-                <Input
-                  id="unidades_boas"
-                  type="number"
-                  value={unidadesBoas}
-                  onChange={(e) => handleUnidadesBoasChange(Number(e.target.value))}
-                />
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="defeitos">Defeitos</Label>
                 <Input
                   id="defeitos"
                   type="number"
-                  {...register('defeitos', { valueAsNumber: true })}
-                  disabled
-                  className="bg-muted"
+                  value={defeitos}
+                  onChange={(e) => handleDefeitosChange(Number(e.target.value))}
                 />
               </div>
             </div>

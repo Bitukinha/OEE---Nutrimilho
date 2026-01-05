@@ -16,6 +16,7 @@ import AdminProfile from "./pages/AdminProfile";
 import { AuthProvider } from "@/context/AuthContext";
 import { useEffect } from "react";
 import { initNotifications } from "@/lib/notifications";
+import { seedTestData } from "@/lib/seedData";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,9 @@ const App = () => {
     const unsub = initNotifications(({ table, event }) => {
       toast(`${table} ${event}`);
     });
+
+    // Executar seed de dados se necessário
+    seedTestData();
 
     return () => unsub();
   }, []);

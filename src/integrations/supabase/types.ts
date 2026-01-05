@@ -184,7 +184,6 @@ export type Database = {
           tempo_real: number
           total_produzido: number
           turno_id: string
-          unidades_boas: number
           updated_at: string
         }
         Insert: {
@@ -205,7 +204,6 @@ export type Database = {
           tempo_real?: number
           total_produzido?: number
           turno_id: string
-          unidades_boas?: number
           updated_at?: string
         }
         Update: {
@@ -226,7 +224,6 @@ export type Database = {
           tempo_real?: number
           total_produzido?: number
           turno_id?: string
-          unidades_boas?: number
           updated_at?: string
         }
         Relationships: [

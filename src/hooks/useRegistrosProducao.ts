@@ -14,7 +14,6 @@ export interface RegistroProducao {
   tempo_ciclo_real: number;
   capacidade_hora: number;
   total_produzido: number;
-  unidades_boas: number;
   defeitos: number;
   disponibilidade: number;
   performance: number;
@@ -43,7 +42,6 @@ export interface RegistroProducaoInput {
   tempo_real: number;
   capacidade_hora: number;
   total_produzido: number;
-  unidades_boas: number;
   defeitos: number;
   observacoes?: string | null;
 }
@@ -79,7 +77,11 @@ export const useRegistrosProducao = (filters?: { dataInicio?: string; dataFim?: 
       
       const { data, error } = await query;
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar registros de produção:', error);
+        throw error;
+      }
+      console.log('Registros de produção carregados:', data?.length || 0);
       return data as RegistroProducao[];
     },
   });
@@ -90,17 +92,19 @@ export const useCreateRegistroProducao = () => {
   
   return useMutation({
     mutationFn: async (registro: RegistroProducaoInput) => {
-      // O input type="date" envia a data no timezone do navegador
-      // Precisamos adicionar 1 dia para compensar a conversão UTC
-      const [year, month, day] = registro.data.split('-').map(Number);
-      const nextDay = day + 1;
-      const dataCorrigida = `${year}-${String(month).padStart(2, '0')}-${String(nextDay).padStart(2, '0')}`;
+      // A data vem no formato YYYY-MM-DD do input type="date"
+      // Não precisamos fazer conversão, apenas usar direto
+      
+      // Calcular tempo_ciclo_ideal e tempo_ciclo_real baseado na capacidade
+      const tempo_ciclo_ideal = registro.capacidade_hora > 0 ? (3600 / registro.capacidade_hora) : 2.5; // segundos
+      const tempo_ciclo_real = registro.total_produzido > 0 ? (registro.tempo_real * 60 / registro.total_produzido) : tempo_ciclo_ideal;
       
       const { data, error } = await supabase
         .from('registros_producao')
         .insert({
           ...registro,
-          data: dataCorrigida,
+          tempo_ciclo_ideal,
+          tempo_ciclo_real,
         })
         .select()
         .single();

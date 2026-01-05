@@ -65,7 +65,11 @@ export const useParadas = (filters?: {
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar paradas:', error);
+        throw error;
+      }
+      console.log('Paradas carregadas:', data?.length || 0);
       return data as Parada[];
     },
   });
