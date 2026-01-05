@@ -19,16 +19,10 @@ export const exportOEEReport = async (
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   
-  // Add logo to top-right corner
+  // Add logo to top-right corner using absolute URL
   try {
-    const logoResponse = await fetch(logoNutrimilho);
-    const logoBlob = await logoResponse.blob();
-    const logoBase64 = await new Promise<string>((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.readAsDataURL(logoBlob);
-    });
-    doc.addImage(logoBase64, 'PNG', pageWidth - 35, 5, 30, 30);
+    const logoUrl = `${window.location.origin}${logoNutrimilho}`;
+    doc.addImage(logoUrl, 'PNG', pageWidth - 35, 5, 30, 30);
   } catch (e) {
     console.warn('Could not add logo to PDF:', e);
   }
@@ -197,16 +191,10 @@ export const exportQualidadeReport = async (
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   
-  // Add logo to top-right corner
+  // Add logo to top-right corner using absolute URL
   try {
-    const logoResponse = await fetch(logoNutrimilho);
-    const logoBlob = await logoResponse.blob();
-    const logoBase64 = await new Promise<string>((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.readAsDataURL(logoBlob);
-    });
-    doc.addImage(logoNutrimilho, 'PNG', pageWidth - 35, 5, 30, 30);
+    const logoUrl = `${window.location.origin}${logoNutrimilho}`;
+    doc.addImage(logoUrl, 'PNG', pageWidth - 35, 5, 30, 30);
   } catch (e) {
     console.warn('Could not add logo to PDF:', e);
   }
@@ -418,16 +406,10 @@ export const exportParadasReport = async (
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   
-  // Add logo to top-right corner
+  // Add logo to top-right corner using absolute URL
   try {
-    const logoResponse = await fetch(logoNutrimilho);
-    const logoBlob = await logoResponse.blob();
-    const logoBase64 = await new Promise<string>((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.readAsDataURL(logoBlob);
-    });
-    doc.addImage(logoBase64, 'PNG', pageWidth - 35, 5, 30, 30);
+    const logoUrl = `${window.location.origin}${logoNutrimilho}`;
+    doc.addImage(logoUrl, 'PNG', pageWidth - 35, 5, 30, 30);
   } catch (e) {
     console.warn('Could not add logo to PDF:', e);
   }
