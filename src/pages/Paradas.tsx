@@ -67,9 +67,9 @@ const Paradas = () => {
     porCategoria[p.categoria] = (porCategoria[p.categoria] || 0) + p.duracao;
   });
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!paradas) return;
-    exportParadasReport(paradas, {
+    await exportParadasReport(paradas, {
       totalMinutos,
       totalParadas,
       mediaMinutos,

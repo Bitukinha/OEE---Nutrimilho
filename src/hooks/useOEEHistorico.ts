@@ -29,7 +29,7 @@ export const useOEEHistorico = (dias: number = 30) => {
   return useQuery({
     queryKey: ['oee_historico', dias],
     queryFn: async (): Promise<OEEHistoricoData> => {
-      const dataFim = format(subDays(new Date(), 1), 'yyyy-MM-dd');
+      const dataFim = format(new Date(), 'yyyy-MM-dd'); // Today
       const dataInicio = format(subDays(new Date(), dias), 'yyyy-MM-dd');
 
       // Buscar turnos

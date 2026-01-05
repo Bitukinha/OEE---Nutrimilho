@@ -62,10 +62,10 @@ const Producao = () => {
     critical: 'Crítico',
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!registros || !metrics) return;
     const equipamento = equipamentos?.find(e => e.id === filters.equipamentoId);
-    exportOEEReport(registros, metrics, {
+    await exportOEEReport(registros, metrics, {
       dataInicio: filters.dataInicio,
       dataFim: filters.dataFim,
       equipamento: equipamento?.nome,

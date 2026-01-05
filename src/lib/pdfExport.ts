@@ -11,7 +11,7 @@ interface OEEMetrics {
   oee: number;
 }
 
-export const exportOEEReport = (
+export const exportOEEReport = async (
   registros: RegistroProducao[],
   metrics: OEEMetrics,
   filters?: { dataInicio?: string; dataFim?: string; equipamento?: string }
@@ -20,7 +20,18 @@ export const exportOEEReport = (
   const pageWidth = doc.internal.pageSize.getWidth();
   
   // Add logo to top-right corner
-  doc.addImage(logoNutrimilho, 'PNG', pageWidth - 35, 5, 30, 30);
+  try {
+    const logoResponse = await fetch(logoNutrimilho);
+    const logoBlob = await logoResponse.blob();
+    const logoBase64 = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(logoBlob);
+    });
+    doc.addImage(logoBase64, 'PNG', pageWidth - 35, 5, 30, 30);
+  } catch (e) {
+    console.warn('Could not add logo to PDF:', e);
+  }
   
   // Header
   doc.setFillColor(46, 125, 50); // Primary green
@@ -178,7 +189,7 @@ interface QualidadeMetrics {
   porMotivo: Record<string, number>;
 }
 
-export const exportQualidadeReport = (
+export const exportQualidadeReport = async (
   produtos: ProdutoBloqueado[],
   metrics: QualidadeMetrics,
   filters?: { dataInicio?: string; dataFim?: string }
@@ -187,7 +198,18 @@ export const exportQualidadeReport = (
   const pageWidth = doc.internal.pageSize.getWidth();
   
   // Add logo to top-right corner
-  doc.addImage(logoNutrimilho, 'PNG', pageWidth - 35, 5, 30, 30);
+  try {
+    const logoResponse = await fetch(logoNutrimilho);
+    const logoBlob = await logoResponse.blob();
+    const logoBase64 = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(logoBlob);
+    });
+    doc.addImage(logoNutrimilho, 'PNG', pageWidth - 35, 5, 30, 30);
+  } catch (e) {
+    console.warn('Could not add logo to PDF:', e);
+  }
   
   // Header
   doc.setFillColor(211, 47, 47); // Destructive red for quality
@@ -388,7 +410,7 @@ interface ParadasMetrics {
   porCategoria: Record<string, number>;
 }
 
-export const exportParadasReport = (
+export const exportParadasReport = async (
   paradas: Parada[],
   metrics: ParadasMetrics,
   filters?: { dataInicio?: string; dataFim?: string }
@@ -397,7 +419,18 @@ export const exportParadasReport = (
   const pageWidth = doc.internal.pageSize.getWidth();
   
   // Add logo to top-right corner
-  doc.addImage(logoNutrimilho, 'PNG', pageWidth - 35, 5, 30, 30);
+  try {
+    const logoResponse = await fetch(logoNutrimilho);
+    const logoBlob = await logoResponse.blob();
+    const logoBase64 = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(logoBlob);
+    });
+    doc.addImage(logoBase64, 'PNG', pageWidth - 35, 5, 30, 30);
+  } catch (e) {
+    console.warn('Could not add logo to PDF:', e);
+  }
   
   // Header
   doc.setFillColor(211, 47, 47); // Red for downtime

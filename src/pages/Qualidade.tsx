@@ -78,10 +78,10 @@ const Qualidade = () => {
     setTurnoId('');
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!produtos) return;
     
-    exportQualidadeReport(
+    await exportQualidadeReport(
       produtos,
       {
         totalBloqueado: metrics?.totalBloqueado || 0,
