@@ -32,6 +32,7 @@ export interface ParadaInput {
   duracao: number;
   motivo: string;
   categoria?: string;
+  observacoes?: string;
 }
 
 export const useParadas = (filters?: {
@@ -99,7 +100,17 @@ export const useCreateParada = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["paradas"] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          return Array.isArray(query.queryKey) && query.queryKey[0] === "paradas";
+        }
+      });
+      // Invalidar também as queries de OEE pois paradas afetam disponibilidade
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          return Array.isArray(query.queryKey) && query.queryKey[0] === 'oee_por_turno';
+        }
+      });
       toast.success("Parada registrada com sucesso!");
     },
     onError: (error) => {
@@ -117,12 +128,31 @@ export const useDeleteParada = () => {
       // Verificar autorização
       requireAuthorization(user?.email);
       
-      const { error } = await supabase.from("paradas").delete().eq("id", id);
+      console.log('🗑️ Deletando parada:', id);
+      
+      const { error, data } = await supabase.from("paradas").delete().eq("id", id).select();
 
-      if (error) throw error;
+      console.log('Delete response:', { error, data });
+
+      if (error) {
+        console.error('❌ Erro ao deletar:', error);
+        throw error;
+      }
+      
+      console.log('✅ Deletado com sucesso');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["paradas"] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          return Array.isArray(query.queryKey) && query.queryKey[0] === "paradas";
+        }
+      });
+      // Invalidar também as queries de OEE pois paradas afetam disponibilidade
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          return Array.isArray(query.queryKey) && query.queryKey[0] === 'oee_por_turno';
+        }
+      });
       toast.success("Parada excluída com sucesso!");
     },
     onError: (error) => {

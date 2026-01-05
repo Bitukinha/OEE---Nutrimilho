@@ -92,7 +92,17 @@ export const useCreateProdutoBloqueado = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['produtos_bloqueados'] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          return Array.isArray(query.queryKey) && query.queryKey[0] === 'produtos_bloqueados';
+        }
+      });
+      // Invalidar também as queries de OEE pois qualidade afeta o índice OEE
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          return Array.isArray(query.queryKey) && query.queryKey[0] === 'oee_por_turno';
+        }
+      });
       toast.success('Produto bloqueado registrado com sucesso!');
     },
     onError: (error) => {
@@ -110,15 +120,35 @@ export const useDeleteProdutoBloqueado = () => {
       // Verificar autorização
       requireAuthorization(user?.email);
       
-      const { error } = await supabase
+      console.log('🗑️ Deletando produto bloqueado:', id);
+      
+      const { error, data } = await supabase
         .from('produtos_bloqueados')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .select();
       
-      if (error) throw error;
+      console.log('Delete response:', { error, data });
+      
+      if (error) {
+        console.error('❌ Erro ao deletar:', error);
+        throw error;
+      }
+      
+      console.log('✅ Deletado com sucesso');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['produtos_bloqueados'] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          return Array.isArray(query.queryKey) && query.queryKey[0] === 'produtos_bloqueados';
+        }
+      });
+      // Invalidar também as queries de OEE pois qualidade afeta o índice OEE
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          return Array.isArray(query.queryKey) && query.queryKey[0] === 'oee_por_turno';
+        }
+      });
       toast.success('Registro excluído com sucesso!');
     },
     onError: (error) => {

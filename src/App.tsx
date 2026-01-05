@@ -9,6 +9,7 @@ import Equipamentos from "./pages/Equipamentos";
 import Paradas from "./pages/Paradas";
 import Qualidade from "./pages/Qualidade";
 import Historico from "./pages/Historico";
+import Motivos from "./pages/Motivos";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -26,8 +27,8 @@ const App = () => {
       toast(`${table} ${event}`);
     });
 
-    // Executar seed de dados se necessário
-    seedTestData();
+    // Executar seed de dados se necessário (descomente apenas para desenvolvimento inicial)
+    // seedTestData();
 
     return () => unsub();
   }, []);
@@ -46,6 +47,7 @@ const App = () => {
               <Route path="/paradas" element={<Paradas />} />
               <Route path="/qualidade" element={<Qualidade />} />
               <Route path="/historico" element={<Historico />} />
+              <Route path="/motivos" element={<Motivos />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/admin/profile" element={<AdminProfile />} />

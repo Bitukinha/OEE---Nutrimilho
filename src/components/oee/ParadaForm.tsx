@@ -23,7 +23,8 @@ import {
 import { useCreateParada } from '@/hooks/useParadas';
 import { useTurnos } from '@/hooks/useTurnos';
 import { useEquipamentos } from '@/hooks/useEquipamentos';
-import { Plus } from 'lucide-react';
+import { useMotivoParadas } from '@/hooks/useMotivos';
+import { Plus, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 const paradaSchema = z.object({
@@ -31,8 +32,9 @@ const paradaSchema = z.object({
   equipamento_id: z.string().min(1, 'Selecione um segmento'),
   data: z.string().min(1, 'Data é obrigatória'),
   duracao: z.number().min(1, 'Duração deve ser maior que 0'),
-  motivo: z.string().min(1, 'Motivo é obrigatório').max(500),
+  motivo: z.string().min(1, 'Selecione um motivo'),
   categoria: z.string().optional(),
+  observacoes: z.string().optional(),
 });
 
 type ParadaFormData = z.infer<typeof paradaSchema>;
@@ -42,6 +44,7 @@ const ParadaForm = () => {
   const createMutation = useCreateParada();
   const { data: turnos } = useTurnos();
   const { data: equipamentos } = useEquipamentos();
+  const { data: motivos, isLoading: motivosLoading } = useMotivoParadas();
 
   const {
     register,
@@ -59,6 +62,7 @@ const ParadaForm = () => {
       duracao: 0,
       motivo: '',
       categoria: 'nao_planejada',
+      observacoes: '',
     },
   });
 
@@ -71,6 +75,7 @@ const ParadaForm = () => {
         duracao: data.duracao,
         motivo: data.motivo,
         categoria: data.categoria,
+        observacoes: data.observacoes,
       });
       setOpen(false);
       reset();
@@ -182,15 +187,41 @@ const ParadaForm = () => {
 
           <div className="space-y-2">
             <Label htmlFor="motivo">Motivo *</Label>
-            <Textarea
-              id="motivo"
-              {...register('motivo')}
-              placeholder="Descreva o motivo da parada..."
-              rows={3}
-            />
+            <Select
+              value={watch('motivo')}
+              onValueChange={(value) => setValue('motivo', value)}
+            >
+              <SelectTrigger>
+                {motivosLoading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Carregando motivos...</span>
+                  </div>
+                ) : (
+                  <SelectValue placeholder="Selecione o motivo da parada" />
+                )}
+              </SelectTrigger>
+              <SelectContent>
+                {motivos?.map((motivo) => (
+                  <SelectItem key={motivo.id} value={motivo.nome}>
+                    {motivo.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {errors.motivo && (
               <p className="text-sm text-destructive">{errors.motivo.message}</p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="observacoes">Observações</Label>
+            <Textarea
+              id="observacoes"
+              {...register('observacoes')}
+              placeholder="Descreva detalhes adicionais sobre a parada..."
+              rows={2}
+            />
           </div>
 
           <div className="flex justify-end gap-2 pt-4">

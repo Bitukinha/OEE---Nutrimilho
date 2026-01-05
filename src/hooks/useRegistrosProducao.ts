@@ -123,7 +123,17 @@ export const useCreateRegistroProducao = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['registros_producao'] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          return Array.isArray(query.queryKey) && query.queryKey[0] === 'registros_producao';
+        }
+      });
+      // Invalidar também as queries derivadas
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          return Array.isArray(query.queryKey) && (query.queryKey[0] === 'oee_por_turno' || query.queryKey[0] === 'oee_metrics');
+        }
+      });
       toast.success('Registro de produção criado com sucesso!');
     },
     onError: (error) => {
@@ -141,15 +151,35 @@ export const useDeleteRegistroProducao = () => {
       // Verificar autorização
       requireAuthorization(user?.email);
       
-      const { error } = await supabase
+      console.log('🗑️ Deletando registro:', id);
+      
+      const { error, data } = await supabase
         .from('registros_producao')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .select();
       
-      if (error) throw error;
+      console.log('Delete response:', { error, data });
+      
+      if (error) {
+        console.error('❌ Erro ao deletar:', error);
+        throw error;
+      }
+      
+      console.log('✅ Deletado com sucesso');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['registros_producao'] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          return Array.isArray(query.queryKey) && query.queryKey[0] === 'registros_producao';
+        }
+      });
+      // Invalidar também as queries derivadas
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          return Array.isArray(query.queryKey) && (query.queryKey[0] === 'oee_por_turno' || query.queryKey[0] === 'oee_metrics');
+        }
+      });
       toast.success('Registro excluído com sucesso!');
     },
     onError: (error) => {

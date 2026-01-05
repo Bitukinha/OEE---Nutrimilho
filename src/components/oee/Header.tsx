@@ -18,6 +18,7 @@ const navItems = [
   { href: '/equipamentos', label: 'Segmentos' },
   { href: '/paradas', label: 'Paradas' },
   { href: '/qualidade', label: 'Qualidade' },
+  { href: '/motivos', label: 'Motivos' },
 ];
 
 const HeaderActions = () => {
