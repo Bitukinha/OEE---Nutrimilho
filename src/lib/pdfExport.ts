@@ -19,6 +19,34 @@ export const exportOEEReport = async (
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   
+  // Calculate metrics from the registros being displayed (not from separate hook)
+  let calculatedMetrics = { disponibilidade: 0, performance: 0, qualidade: 0, oee: 0 };
+  if (registros && registros.length > 0) {
+    const sums = registros.reduce((acc: any, r: any) => {
+      const paradasSum = r.paradas?.reduce((a: number, p: any) => a + (p.duracao || 0), 0) || 0;
+      const disponibilidade = r.tempo_planejado > 0 ? Math.max(0, ((r.tempo_planejado - paradasSum) / r.tempo_planejado) * 100) : 0;
+      const metaKg = (r.equipamentos && r.equipamentos.capacidade_hora) || r.capacidade_hora || 0;
+      const performance = metaKg > 0 ? Math.min(100, (r.total_produzido / metaKg) * 100) : 0;
+      const unidadesBoas = Math.max(0, (r.total_produzido - (r.defeitos || 0)));
+      const qualidade = r.total_produzido > 0 ? Math.max(0, (unidadesBoas / r.total_produzido) * 100) : 0;
+      const oee = ((disponibilidade / 100) * (performance / 100) * (qualidade / 100)) * 100;
+
+      acc.disponibilidade += disponibilidade;
+      acc.performance += performance;
+      acc.qualidade += qualidade;
+      acc.oee += oee;
+      return acc;
+    }, { disponibilidade: 0, performance: 0, qualidade: 0, oee: 0 });
+
+    const len = registros.length;
+    calculatedMetrics = {
+      disponibilidade: Number((sums.disponibilidade / len).toFixed(1)),
+      performance: Number((sums.performance / len).toFixed(1)),
+      qualidade: Number((sums.qualidade / len).toFixed(1)),
+      oee: Number((sums.oee / len).toFixed(1)),
+    };
+  }
+  
   // Add logo to top-right corner using absolute URL
   try {
     const logoUrl = `${window.location.origin}${logoNutrimilho}`;
@@ -68,10 +96,10 @@ export const exportOEEReport = async (
   const gap = 4;
   
   const metricsData = [
-    { label: 'OEE', value: metrics.oee, color: getOEEColor(metrics.oee) },
-    { label: 'Disponibilidade', value: metrics.disponibilidade, color: [25, 118, 210] },
-    { label: 'Performance', value: metrics.performance, color: [249, 168, 37] },
-    { label: 'Qualidade', value: metrics.qualidade, color: [123, 31, 162] },
+    { label: 'OEE', value: calculatedMetrics.oee, color: getOEEColor(calculatedMetrics.oee) },
+    { label: 'Disponibilidade', value: calculatedMetrics.disponibilidade, color: [25, 118, 210] },
+    { label: 'Performance', value: calculatedMetrics.performance, color: [249, 168, 37] },
+    { label: 'Qualidade', value: calculatedMetrics.qualidade, color: [123, 31, 162] },
   ];
   
   metricsData.forEach((metric, index) => {
@@ -237,7 +265,7 @@ export const exportQualidadeReport = async (
   
   const metricsData = [
     { label: 'Qualidade OEE', value: `${metrics.qualidadeOEE.toFixed(1)}%`, color: getQualidadeColor(metrics.qualidadeOEE) },
-    { label: 'Total Bloqueado', value: `${metrics.totalBloqueado} un`, color: [211, 47, 47] as [number, number, number] },
+    { label: 'Total Bloqueado', value: `${metrics.totalBloqueado} kg`, color: [211, 47, 47] as [number, number, number] },
     { label: 'OEE Geral', value: `${metrics.oeeGeral.toFixed(1)}%`, color: getOEEColor(metrics.oeeGeral) },
   ];
   
@@ -263,7 +291,7 @@ export const exportQualidadeReport = async (
   doc.setFont('helvetica', 'bold');
   doc.text('Distribuição por Destino', 14, 110);
   
-  const destinoData = Object.entries(metrics.porDestino).map(([destino, qtd]) => [destino, `${qtd} un`]);
+  const destinoData = Object.entries(metrics.porDestino).map(([destino, qtd]) => [destino, `${qtd} kg`]);
   if (destinoData.length > 0) {
     autoTable(doc, {
       startY: 115,
@@ -287,7 +315,7 @@ export const exportQualidadeReport = async (
     .slice(0, 10)
     .map(([motivo, qtd]) => {
       const percentual = metrics.totalBloqueado > 0 ? ((qtd / metrics.totalBloqueado) * 100).toFixed(1) : '0';
-      return [motivo, `${qtd} un`, `${percentual}%`];
+      return [motivo, `${qtd} kg`, `${percentual}%`];
     });
   
   if (motivoData.length > 0) {

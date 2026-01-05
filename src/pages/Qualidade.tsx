@@ -162,7 +162,7 @@ const Qualidade = () => {
                 <div>
                   <p className="text-sm text-muted-foreground font-medium">Impacto dos Bloqueios</p>
                   <p className="text-4xl font-bold text-destructive">
-                    -{metrics?.totalBloqueado || 0} un
+                    -{metrics?.totalBloqueado || 0} kg
                   </p>
                 </div>
               </div>
@@ -197,7 +197,7 @@ const Qualidade = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Total Bloqueado</p>
                   <p className="text-2xl font-bold text-foreground">
-                    {metrics?.totalBloqueado || 0} un
+                    {metrics?.totalBloqueado || 0} kg
                   </p>
                 </div>
               </div>
@@ -213,7 +213,7 @@ const Qualidade = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Para Reprocesso</p>
                   <p className="text-2xl font-bold text-foreground">
-                    {metrics?.porDestino?.['Reprocesso'] || 0} un
+                    {metrics?.porDestino?.['Reprocesso'] || 0} kg
                   </p>
                 </div>
               </div>
@@ -229,7 +229,7 @@ const Qualidade = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Descarte</p>
                   <p className="text-2xl font-bold text-foreground">
-                    {metrics?.porDestino?.['Descarte'] || 0} un
+                    {metrics?.porDestino?.['Descarte'] || 0} kg
                   </p>
                 </div>
               </div>

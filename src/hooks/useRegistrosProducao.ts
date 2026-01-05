@@ -250,7 +250,7 @@ export const useOEEMetrics = () => {
         const performance = metaKg > 0 ? Math.min(100, (r.total_produzido / metaKg) * 100) : 0;
         const unidadesBoas = Math.max(0, (r.total_produzido - (r.defeitos || 0)));
         const qualidade = r.total_produzido > 0 ? Math.max(0, (unidadesBoas / r.total_produzido) * 100) : 0;
-        const oee = (disponibilidade * performance * qualidade) / 10000;
+        const oee = ((disponibilidade / 100) * (performance / 100) * (qualidade / 100)) * 100;
 
         acc.disponibilidade += disponibilidade;
         acc.performance += performance;
