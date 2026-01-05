@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Header from '@/components/oee/Header';
 import ProdutoBloqueadoForm from '@/components/oee/ProdutoBloqueadoForm';
@@ -333,7 +333,7 @@ const Qualidade = () => {
                     {produtos.map((produto) => (
                       <TableRow key={produto.id}>
                         <TableCell className="font-medium">
-                          {format(new Date(produto.data), 'dd/MM/yyyy', { locale: ptBR })}
+                          {produto.data ? format(parseISO(produto.data), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
                         </TableCell>
                         <TableCell>{produto.turnos?.nome || '-'}</TableCell>
                         <TableCell>{produto.equipamentos?.nome || '-'}</TableCell>

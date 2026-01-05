@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { emitLocalNotification } from '@/lib/notifications';
 import { requireAuthorization } from '@/lib/authorizationUtils';
 import { useAuth } from '@/context/AuthContext';
 
@@ -82,9 +83,22 @@ export const useCreateProdutoBloqueado = () => {
       // Verificar autorização
       requireAuthorization(user?.email);
       
+      // Only include fields that are expected in the DB schema to avoid
+      // sending unknown columns (which cause 400 errors).
+      const insertPayload: Record<string, any> = {
+        data: produto.data,
+        turno_id: produto.turno_id,
+        equipamento_id: produto.equipamento_id,
+        motivo_bloqueio: produto.motivo_bloqueio,
+        quantidade: produto.quantidade,
+        numero_lacre: produto.numero_lacre ?? null,
+        destino: produto.destino,
+        // omit `observacoes` if the DB doesn't have the column
+      };
+
       const { data, error } = await supabase
         .from('produtos_bloqueados')
-        .insert(produto)
+        .insert(insertPayload)
         .select()
         .single();
       
@@ -92,6 +106,10 @@ export const useCreateProdutoBloqueado = () => {
       return data;
     },
     onSuccess: () => {
+      // Emit local notification for immediate UI feedback
+      try { emitLocalNotification({ table: 'produtos_bloqueados', event: 'INSERT' }); } catch (e) {
+        console.warn('emitLocalNotification failed', e);
+      }
       queryClient.invalidateQueries({ 
         predicate: (query) => {
           return Array.isArray(query.queryKey) && query.queryKey[0] === 'produtos_bloqueados';

@@ -76,7 +76,6 @@ const Equipamentos = () => {
                     <TableRow className="hover:bg-transparent">
                       <TableHead className="font-semibold">Nome</TableHead>
                       <TableHead className="font-semibold">Código</TableHead>
-                      <TableHead className="font-semibold text-center">Cap./Hora</TableHead>
                       <TableHead className="font-semibold text-center">Status</TableHead>
                       <TableHead className="font-semibold text-right">Ações</TableHead>
                     </TableRow>
@@ -89,9 +88,6 @@ const Equipamentos = () => {
                           <TableCell className="font-medium">{equip.nome}</TableCell>
                           <TableCell className="text-muted-foreground">
                             {equip.codigo || '-'}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {equip.capacidade_hora || '-'}
                           </TableCell>
                           <TableCell className="text-center">
                             <Badge variant="outline" className={cn(status?.className)}>

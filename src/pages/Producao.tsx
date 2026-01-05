@@ -36,6 +36,7 @@ import { useEquipamentos } from '@/hooks/useEquipamentos';
 import RegistroProducaoForm from '@/components/oee/RegistroProducaoForm';
 import { exportOEEReport } from '@/lib/pdfExport';
 import { FileSpreadsheet, Trash2, FileDown, Loader2, Filter } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { getOEEColor, getOEELevel } from '@/types/oee';
 import { useTurnos } from '@/hooks/useTurnos';
@@ -222,12 +223,35 @@ const Producao = () => {
                   </TableHeader>
                   <TableBody>
                     {registros.map((registro) => {
-                      const oeeValue = Number(registro.oee);
+                      // Compute metrics client-side using Meta (kg) as the performance driver
+                      const metaKg = registro.capacidade_hora || 0;
+                      const paradasSum = registro.paradas?.reduce((acc: number, p: any) => acc + (p.duracao || 0), 0) || 0;
+                      const disponibilidadeCalc = registro.tempo_planejado > 0
+                        ? Math.max(0, ((registro.tempo_planejado - paradasSum) / registro.tempo_planejado) * 100)
+                        : 0;
+
+                      // Performance based on productive time vs tempo_real: (tempo_real - paradas) / tempo_real
+                      // Performance remains based on produced / metaKg (cliente requested)
+                      const performanceCalc = metaKg > 0
+                        ? Math.min(100, (registro.total_produzido / metaKg) * 100)
+                        : (registro.tempo_ciclo_real > 0 ? Math.min(100, (registro.tempo_ciclo_ideal / registro.tempo_ciclo_real) * 100) : 0);
+
+                      const unidadesBoas = Math.max(0, (registro.total_produzido - (registro.defeitos || 0)));
+                      const qualidadeCalc = registro.total_produzido > 0
+                        ? Math.max(0, (unidadesBoas / registro.total_produzido) * 100)
+                        : 0;
+
+                      const oeeValue = Number(((disponibilidadeCalc * performanceCalc * qualidadeCalc) / 10000).toFixed(1));
                       const level = getOEELevel(oeeValue);
+
+                      const disponibilidadeDisplay = Number(disponibilidadeCalc.toFixed(1));
+                      const performanceDisplay = Number(performanceCalc.toFixed(1));
+                      const qualidadeDisplay = Number(qualidadeCalc.toFixed(1));
+
                       return (
                         <TableRow key={registro.id} className="hover:bg-muted/30">
                           <TableCell className="font-medium">
-                            {new Date(registro.data).toLocaleDateString('pt-BR')}
+                            {registro.data ? format(parseISO(registro.data), 'dd/MM/yyyy') : '-'}
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline" className="font-normal">
@@ -237,17 +261,17 @@ const Producao = () => {
                           <TableCell className="max-w-[200px] truncate">
                             {registro.equipamentos?.nome || '-'}
                           </TableCell>
-                          <TableCell className={cn("text-center font-medium", getOEEColor(Number(registro.disponibilidade)))}>
-                            {Number(registro.disponibilidade).toFixed(1)}%
+                          <TableCell className={cn("text-center font-medium", getOEEColor(disponibilidadeDisplay))}>
+                            {disponibilidadeDisplay}%
                           </TableCell>
-                          <TableCell className={cn("text-center font-medium", getOEEColor(Number(registro.performance)))}>
-                            {Number(registro.performance).toFixed(1)}%
+                          <TableCell className={cn("text-center font-medium", getOEEColor(performanceDisplay))}>
+                            {performanceDisplay}%
                           </TableCell>
-                          <TableCell className={cn("text-center font-medium", getOEEColor(Number(registro.qualidade)))}>
-                            {Number(registro.qualidade).toFixed(1)}%
+                          <TableCell className={cn("text-center font-medium", getOEEColor(qualidadeDisplay))}>
+                            {qualidadeDisplay}%
                           </TableCell>
                           <TableCell className={cn("text-center font-bold text-lg", getOEEColor(oeeValue))}>
-                            {oeeValue.toFixed(1)}%
+                            {oeeValue}%
                           </TableCell>
                           <TableCell className="text-center">
                             <Badge

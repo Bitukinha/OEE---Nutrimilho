@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { emitLocalNotification } from '@/lib/notifications';
 import { requireAuthorization } from "@/lib/authorizationUtils";
 import { useAuth } from "@/context/AuthContext";
 
@@ -84,25 +85,64 @@ export const useCreateParada = () => {
 
   return useMutation({
     mutationFn: async (parada: ParadaInput) => {
+      console.log('Attempting to create parada, payload:', parada, 'user:', user?.email);
       // Verificar autorização
       requireAuthorization(user?.email);
       
+      // Build payload including only columns expected in the DB to avoid
+      // sending fields that might not exist (eg. observacoes)
+      const insertPayload: Record<string, any> = {
+        turno_id: parada.turno_id,
+        equipamento_id: parada.equipamento_id,
+        data: parada.data,
+        duracao: parada.duracao,
+        motivo: parada.motivo,
+        categoria: parada.categoria || "nao_planejada",
+      };
+
+      // Try to associate this parada with an existing production record (registro_producao)
+      // matching same date, turno and equipamento so it affects disponibilidade for that registro.
+      try {
+        const { data: registrosMatch, error: regError } = await supabase
+          .from('registros_producao')
+          .select('id')
+          .eq('data', parada.data)
+          .eq('turno_id', parada.turno_id)
+          .eq('equipamento_id', parada.equipamento_id)
+          .limit(1);
+
+        if (!regError && registrosMatch && registrosMatch.length > 0) {
+          insertPayload.registro_id = registrosMatch[0].id;
+        }
+      } catch (e) {
+        console.warn('Could not lookup registro to associate parada:', e);
+      }
+
       const { data, error } = await supabase
         .from("paradas")
-        .insert({
-          ...parada,
-          categoria: parada.categoria || "nao_planejada",
-        })
+        .insert(insertPayload)
         .select()
         .single();
+
+      console.log('Create parada response:', { data, error });
 
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
+      // Emit local notification for immediate UI feedback
+      try { emitLocalNotification({ table: 'paradas', event: 'INSERT' }); } catch (e) {
+        console.warn('emitLocalNotification failed', e);
+      }
       queryClient.invalidateQueries({ 
         predicate: (query) => {
           return Array.isArray(query.queryKey) && query.queryKey[0] === "paradas";
+        }
+      });
+      // Also invalidate registros_producao so UI recalculates disponibilidade per registro
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          return Array.isArray(query.queryKey) && query.queryKey[0] === 'registros_producao';
         }
       });
       // Invalidar também as queries de OEE pois paradas afetam disponibilidade

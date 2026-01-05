@@ -24,8 +24,7 @@ import {
 import { useCreateProdutoBloqueado, ProdutoBloqueadoInput } from '@/hooks/useProdutosBloqueados';
 import { useEquipamentos } from '@/hooks/useEquipamentos';
 import { useTurnos } from '@/hooks/useTurnos';
-import { useMotivoBloqueios } from '@/hooks/useMotivos';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 const produtoSchema = z.object({
   data: z.string().min(1, 'Data é obrigatória'),
@@ -54,7 +53,8 @@ const ProdutoBloqueadoForm = () => {
   const createMutation = useCreateProdutoBloqueado();
   const { data: equipamentos } = useEquipamentos();
   const { data: turnos } = useTurnos();
-  const { data: motivos, isLoading: motivosLoading } = useMotivoBloqueios();
+
+  // motivos are no longer fetched from DB; keep free-text motivo_bloqueio
 
   const {
     register,
@@ -156,28 +156,12 @@ const ProdutoBloqueadoForm = () => {
 
           <div className="space-y-2">
             <Label htmlFor="motivo_bloqueio">Motivo do Bloqueio *</Label>
-            <Select
-              value={watch('motivo_bloqueio')}
-              onValueChange={(value) => setValue('motivo_bloqueio', value)}
-            >
-              <SelectTrigger>
-                {motivosLoading ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Carregando motivos...</span>
-                  </div>
-                ) : (
-                  <SelectValue placeholder="Selecione o motivo do bloqueio" />
-                )}
-              </SelectTrigger>
-              <SelectContent>
-                {motivos?.map((motivo) => (
-                  <SelectItem key={motivo.id} value={motivo.nome}>
-                    {motivo.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Textarea
+              id="motivo_bloqueio"
+              {...register('motivo_bloqueio')}
+              placeholder="Descreva o motivo do bloqueio"
+              rows={2}
+            />
             {errors.motivo_bloqueio && (
               <p className="text-sm text-destructive">{errors.motivo_bloqueio.message}</p>
             )}

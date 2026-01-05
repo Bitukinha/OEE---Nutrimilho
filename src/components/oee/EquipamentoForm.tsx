@@ -123,11 +123,12 @@ const EquipamentoForm = ({ equipamento, trigger }: EquipamentoFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="capacidade_hora">Capacidade/Hora</Label>
+            <Label htmlFor="capacidade_hora">Meta (kg)</Label>
             <Input
               id="capacidade_hora"
               type="number"
               {...register('capacidade_hora', { valueAsNumber: true })}
+              placeholder="Ex: 120"
             />
           </div>
 

@@ -283,7 +283,7 @@ const Index = () => {
                           </div>
                           <div className="text-right">
                           <p className="text-xs text-muted-foreground">
-                            Cap: {equip.capacidade_hora || 100}/h
+                            Meta: {equip.capacidade_hora ? `${equip.capacidade_hora} kg` : '-'}
                           </p>
                           </div>
                         </div>

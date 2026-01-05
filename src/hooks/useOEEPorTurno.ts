@@ -49,10 +49,10 @@ export const useOEEPorTurno = (dataInicio?: string, dataFim?: string) => {
       const { data: registros, error: registrosError } = await registrosQuery;
       if (registrosError) throw registrosError;
 
-      // Buscar paradas
+      // Buscar paradas (incluir registro_id para associar por registro)
       let paradasQuery = supabase
         .from('paradas')
-        .select('turno_id, duracao');
+        .select('id, registro_id, turno_id, duracao');
 
       if (dataInicio) {
         paradasQuery = paradasQuery.gte('data', dataInicio);
@@ -79,11 +79,15 @@ export const useOEEPorTurno = (dataInicio?: string, dataFim?: string) => {
       const { data: bloqueados, error: bloqueadosError } = await bloqueadosQuery;
       if (bloqueadosError) throw bloqueadosError;
 
-      // Agrupar paradas por turno
+      // Agrupar paradas por turno e por registro
       const paradasPorTurno: Record<string, number> = {};
+      const paradasPorRegistro: Record<string, number> = {};
       paradas?.forEach(p => {
         if (p.turno_id) {
-          paradasPorTurno[p.turno_id] = (paradasPorTurno[p.turno_id] || 0) + p.duracao;
+          paradasPorTurno[p.turno_id] = (paradasPorTurno[p.turno_id] || 0) + (p.duracao || 0);
+        }
+        if (p.registro_id) {
+          paradasPorRegistro[p.registro_id] = (paradasPorRegistro[p.registro_id] || 0) + (p.duracao || 0);
         }
       });
 
@@ -124,19 +128,19 @@ export const useOEEPorTurno = (dataInicio?: string, dataFim?: string) => {
         const bloqueadosProporcional = totalBloqueados / registrosTurno.length;
 
         registrosTurno.forEach(registro => {
-          // Disponibilidade = Tempo Real / Tempo Planejado
-          const disponibilidade = registro.tempo_planejado > 0 
-            ? (registro.tempo_real / registro.tempo_planejado) * 100 
+          // Somar as paradas deste registro (se existirem)
+          const paradasSumRegistro = paradasPorRegistro[registro.id] || 0;
+          // Disponibilidade = (Tempo Planejado - Paradas) / Tempo Planejado
+          const disponibilidade = registro.tempo_planejado > 0
+            ? Math.max(0, ((registro.tempo_planejado - paradasSumRegistro) / registro.tempo_planejado) * 100)
             : 0;
           
-          // Performance = Total Produzido / (Capacidade/hora × Tempo disponível em horas)
-          // Tempo disponível = Tempo Real - Paradas (proporcional)
-          const paradasProporcional = totalParadas / registrosTurno.length;
-          const tempoDisponivel = Math.max(0, registro.tempo_real - paradasProporcional);
-          const capacidadeEsperada = (registro.capacidade_hora || 100) * (tempoDisponivel / 60);
-          const performance = capacidadeEsperada > 0 
-            ? (registro.total_produzido / capacidadeEsperada) * 100 
-            : 0;
+          // Performance agora baseada na meta em kg informada no registro (`capacidade_hora` foi repurposed como "metaKg").
+          // Se a meta for zero/ausente, considerar performance 100% se produziu >0.
+          const metaKg = registro.capacidade_hora || 0;
+          const performance = metaKg > 0
+            ? Math.min(100, (registro.total_produzido / metaKg) * 100)
+            : (registro.total_produzido > 0 ? 100 : 0);
           
           // Qualidade = (Total - Defeitos - Bloqueados) / Total Produzido
           const unidadesBoas = Math.max(0, registro.total_produzido - registro.defeitos - bloqueadosProporcional);

@@ -107,9 +107,8 @@ export const useOEEHistorico = (dias: number = 30) => {
 
         regs.forEach(r => {
           const disp = r.tempo_planejado > 0 ? (r.tempo_real / r.tempo_planejado) * 100 : 0;
-          const tempoDisp = Math.max(0, r.tempo_real - paradasProp);
-          const capEsperada = (r.capacidade_hora || 100) * (tempoDisp / 60);
-          const perf = capEsperada > 0 ? Math.min((r.total_produzido / capEsperada) * 100, 100) : 0;
+          const metaKg = r.capacidade_hora || 0;
+          const perf = metaKg > 0 ? Math.min((r.total_produzido / metaKg) * 100, 100) : (r.total_produzido > 0 ? 100 : 0);
           const unidadesBoas = Math.max(0, r.total_produzido - r.defeitos - bloqProp);
           const qual = r.total_produzido > 0 ? Math.max(0, (unidadesBoas / r.total_produzido) * 100) : 0;
 
@@ -151,9 +150,8 @@ export const useOEEHistorico = (dias: number = 30) => {
 
           regsTurno.forEach(r => {
             const disp = r.tempo_planejado > 0 ? (r.tempo_real / r.tempo_planejado) * 100 : 0;
-            const tempoDisp = Math.max(0, r.tempo_real - paradasProp);
-            const capEsperada = (r.capacidade_hora || 100) * (tempoDisp / 60);
-            const perf = capEsperada > 0 ? Math.min((r.total_produzido / capEsperada) * 100, 100) : 0;
+            const metaKg = r.capacidade_hora || 0;
+            const perf = metaKg > 0 ? Math.min((r.total_produzido / metaKg) * 100, 100) : (r.total_produzido > 0 ? 100 : 0);
             const unidadesBoas = Math.max(0, r.total_produzido - r.defeitos - bloqProp);
             const qual = r.total_produzido > 0 ? Math.max(0, (unidadesBoas / r.total_produzido) * 100) : 0;
 

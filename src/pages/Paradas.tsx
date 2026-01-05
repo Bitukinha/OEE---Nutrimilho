@@ -30,7 +30,7 @@ import ParetoParadas from '@/components/oee/ParetoParadas';
 import TendenciaParadas from '@/components/oee/TendenciaParadas';
 import { exportParadasReport } from '@/lib/pdfExport';
 import { Trash2, Clock, Loader2, FileText } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useTurnos } from '@/hooks/useTurnos';
@@ -229,7 +229,7 @@ const Paradas = () => {
                       return (
                         <TableRow key={parada.id} className="hover:bg-muted/30">
                           <TableCell className="font-medium">
-                            {parada.data ? format(new Date(parada.data), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
+                            {parada.data ? format(parseISO(parada.data), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
                           </TableCell>
                           <TableCell>{parada.turnos?.nome || '-'}</TableCell>
                           <TableCell>{parada.equipamentos?.nome || '-'}</TableCell>

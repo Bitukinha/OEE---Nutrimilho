@@ -32,7 +32,7 @@ const registroSchema = z.object({
   turno_id: z.string().min(1, 'Turno é obrigatório'),
   tempo_planejado: z.number().min(1, 'Tempo planejado deve ser maior que 0'),
   tempo_real: z.number().min(0, 'Tempo real não pode ser negativo'),
-  capacidade_hora: z.number().min(1, 'Capacidade deve ser maior que 0'),
+  capacidade_hora: z.number().min(1, 'Meta em kg deve ser maior que 0'),
   total_produzido: z.number().min(0, 'Total produzido não pode ser negativo'),
   defeitos: z.number().min(0, 'Defeitos não pode ser negativo'),
   observacoes: z.string().optional(),
@@ -55,7 +55,7 @@ const RegistroProducaoForm = () => {
     formState: { errors },
   } = useForm<RegistroFormData>({
     resolver: zodResolver(registroSchema),
-    defaultValues: {
+      defaultValues: {
       data: format(new Date(), 'yyyy-MM-dd'),
       equipamento_id: '',
       turno_id: '',
@@ -93,9 +93,7 @@ const RegistroProducaoForm = () => {
   const handleEquipamentoChange = (id: string) => {
     setValue('equipamento_id', id);
     const equipamento = equipamentos?.find(e => e.id === id);
-    if (equipamento && equipamento.capacidade_hora) {
-      setValue('capacidade_hora', equipamento.capacidade_hora);
-    }
+    // Não autocompletar meta a partir do equipamento — meta é informada manualmente no formulário
   };
 
   const onSubmit = async (data: RegistroFormData) => {
@@ -201,7 +199,7 @@ const RegistroProducaoForm = () => {
                 />
               </div>
               <div className="space-y-2 col-span-2">
-                <Label htmlFor="capacidade_hora">Capacidade (un/hora)</Label>
+                <Label htmlFor="capacidade_hora">Meta (kg)</Label>
                 <Input
                   id="capacidade_hora"
                   type="number"

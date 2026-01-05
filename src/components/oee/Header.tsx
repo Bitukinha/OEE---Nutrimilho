@@ -1,9 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
 import logo from '@/assets/logo-nutrimilho.png';
-import { Bell, Settings, User, Menu } from 'lucide-react';
-import { useState } from 'react';
+import { Bell, Settings, Menu } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/components/ui/sonner';
+import { onLocalNotify } from '@/lib/notifications';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -18,26 +19,77 @@ const navItems = [
   { href: '/equipamentos', label: 'Segmentos' },
   { href: '/paradas', label: 'Paradas' },
   { href: '/qualidade', label: 'Qualidade' },
-  { href: '/motivos', label: 'Motivos' },
+  // Motivos tab removed per user request; revert to free-text input
 ];
 
 const HeaderActions = () => {
   const { user, signOut } = useAuth();
-  const [open, setOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [bellOpen, setBellOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{ table: string; event: string; ts: string }>>([]);
+  const bellRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const unsub = onLocalNotify((payload) => {
+      setNotifications((prev) => [{ ...payload, ts: new Date().toISOString() }, ...prev].slice(0, 20));
+    });
+    return () => unsub();
+  }, []);
 
   return (
     <div className="flex items-center gap-2">
-      <Button variant="ghost" size="icon" className="relative" onClick={() => toast('Notificações ativadas')}>
-        <Bell className="h-5 w-5" />
-        <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
-      </Button>
+      <div className="relative" ref={bellRef}>
+        <Button variant="ghost" size="icon" className="relative" onClick={() => setBellOpen((s) => !s)}>
+          <Bell className="h-5 w-5" />
+          {notifications.length > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[18px] flex items-center justify-center px-1 text-xs rounded-full bg-destructive text-white">
+              {notifications.length}
+            </span>
+          )}
+        </Button>
+
+        {bellOpen && (
+          <div className="absolute right-0 mt-2 w-80 max-h-80 overflow-auto bg-card border border-border rounded-md shadow-lg p-2 z-20">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm font-medium">Notificações</div>
+              {notifications.length > 0 && (
+                <button
+                  className="text-xs text-muted-foreground hover:underline"
+                  onClick={() => setNotifications([])}
+                >
+                  Limpar
+                </button>
+              )}
+            </div>
+            {notifications.length === 0 ? (
+              <div className="text-sm text-muted-foreground">Nenhuma notificação</div>
+            ) : (
+              notifications.map((n, idx) => (
+                <div key={n.ts + idx} className="py-1 border-b last:border-b-0 text-sm flex justify-between items-start">
+                  <div>
+                    <div className="font-medium">{n.table}</div>
+                    <div className="text-xs text-muted-foreground">{n.event} • {new Date(n.ts).toLocaleTimeString()}</div>
+                  </div>
+                  <button
+                    className="ml-4 text-xs text-muted-foreground hover:text-destructive"
+                    onClick={() => setNotifications((prev) => prev.filter((_, i) => i !== idx))}
+                    aria-label="Remover notificação"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="relative">
-        <Button variant="ghost" size="icon" className="hidden sm:flex" onClick={() => setOpen(!open)}>
+        <Button variant="ghost" size="icon" className="hidden sm:flex" onClick={() => setSettingsOpen(!settingsOpen)}>
           <Settings className="h-5 w-5" />
         </Button>
 
-        {open && (
+        {settingsOpen && (
           <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-md shadow-lg p-2 z-10">
             {user ? (
               <>
@@ -48,7 +100,7 @@ const HeaderActions = () => {
                   className="w-full text-left px-2 py-1 hover:bg-muted rounded text-sm"
                   onClick={() => {
                     signOut();
-                    setOpen(false);
+                    setSettingsOpen(false);
                   }}
                 >
                   Sair
@@ -62,10 +114,6 @@ const HeaderActions = () => {
           </div>
         )}
       </div>
-
-      <Button variant="ghost" size="icon" className="rounded-full hidden sm:flex">
-        <User className="h-5 w-5" />
-      </Button>
     </div>
   );
 };

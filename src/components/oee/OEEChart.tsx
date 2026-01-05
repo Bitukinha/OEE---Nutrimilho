@@ -12,6 +12,7 @@ import {
 import { useRegistrosProducao } from '@/hooks/useRegistrosProducao';
 import { Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
+import { format, parseISO } from 'date-fns';
 
 const OEEChart = () => {
   const { data: registros, isLoading } = useRegistrosProducao();
@@ -34,14 +35,14 @@ const OEEChart = () => {
 
     const avgData = Object.entries(groupedByDate)
       .map(([date, values]) => ({
-        day: new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+        day: date ? format(parseISO(date), 'dd/MM') : '-',
         oee: values.oee.reduce((a, b) => a + b, 0) / values.oee.length,
         disponibilidade: values.disponibilidade.reduce((a, b) => a + b, 0) / values.disponibilidade.length,
         performance: values.performance.reduce((a, b) => a + b, 0) / values.performance.length,
         qualidade: values.qualidade.reduce((a, b) => a + b, 0) / values.qualidade.length,
         date,
       }))
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime())
       .slice(-7); // Last 7 days
 
     return avgData;

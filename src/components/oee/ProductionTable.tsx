@@ -14,6 +14,7 @@ import { useRegistrosProducao } from '@/hooks/useRegistrosProducao';
 import { cn } from '@/lib/utils';
 import { getOEEColor, getOEELevel } from '@/types/oee';
 import { FileSpreadsheet, Loader2 } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
 
 const ProductionTable = () => {
   const { data: registros, isLoading } = useRegistrosProducao();
@@ -66,7 +67,7 @@ const ProductionTable = () => {
                     return (
                       <TableRow key={row.id} className="hover:bg-muted/30">
                         <TableCell className="font-medium">
-                          {new Date(row.data).toLocaleDateString('pt-BR')}
+                          {row.data ? format(parseISO(row.data), 'dd/MM/yyyy') : '-'}
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="font-normal">

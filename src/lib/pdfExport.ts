@@ -1,6 +1,8 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { format, parseISO } from 'date-fns';
 import { RegistroProducao } from '@/hooks/useRegistrosProducao';
+import logoNutrimilho from '@/assets/logo-nutrimilho.png';
 
 interface OEEMetrics {
   disponibilidade: number;
@@ -16,6 +18,9 @@ export const exportOEEReport = (
 ) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
+  
+  // Add logo to top-right corner
+  doc.addImage(logoNutrimilho, 'PNG', pageWidth - 35, 5, 30, 30);
   
   // Header
   doc.setFillColor(46, 125, 50); // Primary green
@@ -33,7 +38,7 @@ export const exportOEEReport = (
   // Date and filters
   doc.setTextColor(100, 100, 100);
   doc.setFontSize(10);
-  const today = new Date().toLocaleDateString('pt-BR');
+  const today = format(new Date(), 'dd/MM/yyyy');
   doc.text(`Gerado em: ${today}`, pageWidth - 50, 50);
   
   if (filters?.dataInicio || filters?.dataFim) {
@@ -87,7 +92,7 @@ export const exportOEEReport = (
   doc.text('Registros de Produção', 14, 115);
   
   const tableData = registros.map((r) => [
-    new Date(r.data).toLocaleDateString('pt-BR'),
+    r.data ? format(parseISO(r.data), 'dd/MM/yyyy') : '-',
     r.turnos?.nome || '-',
     r.equipamentos?.nome || '-',
     `${Number(r.disponibilidade).toFixed(1)}%`,
@@ -181,6 +186,9 @@ export const exportQualidadeReport = (
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   
+  // Add logo to top-right corner
+  doc.addImage(logoNutrimilho, 'PNG', pageWidth - 35, 5, 30, 30);
+  
   // Header
   doc.setFillColor(211, 47, 47); // Destructive red for quality
   doc.rect(0, 0, pageWidth, 40, 'F');
@@ -197,7 +205,7 @@ export const exportQualidadeReport = (
   // Date and filters
   doc.setTextColor(100, 100, 100);
   doc.setFontSize(10);
-  const today = new Date().toLocaleDateString('pt-BR');
+  const today = format(new Date(), 'dd/MM/yyyy');
   doc.text(`Gerado em: ${today}`, pageWidth - 50, 50);
   
   if (filters?.dataInicio || filters?.dataFim) {
@@ -298,7 +306,7 @@ export const exportQualidadeReport = (
   }
   
   const tableData = produtos.map((p) => [
-    new Date(p.data).toLocaleDateString('pt-BR'),
+    p.data ? format(parseISO(p.data), 'dd/MM/yyyy') : '-',
     p.turnos?.nome || '-',
     p.equipamentos?.nome || '-',
     p.motivo_bloqueio.substring(0, 30) + (p.motivo_bloqueio.length > 30 ? '...' : ''),
@@ -388,6 +396,9 @@ export const exportParadasReport = (
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   
+  // Add logo to top-right corner
+  doc.addImage(logoNutrimilho, 'PNG', pageWidth - 35, 5, 30, 30);
+  
   // Header
   doc.setFillColor(211, 47, 47); // Red for downtime
   doc.rect(0, 0, pageWidth, 40, 'F');
@@ -404,7 +415,7 @@ export const exportParadasReport = (
   // Date and filters
   doc.setTextColor(100, 100, 100);
   doc.setFontSize(10);
-  const today = new Date().toLocaleDateString('pt-BR');
+  const today = format(new Date(), 'dd/MM/yyyy');
   doc.text(`Gerado em: ${today}`, pageWidth - 50, 50);
   
   if (filters?.dataInicio || filters?.dataFim) {
@@ -491,7 +502,7 @@ export const exportParadasReport = (
   }
   
   const tableData = paradas.map((p) => [
-    new Date(p.data).toLocaleDateString('pt-BR'),
+    p.data ? format(parseISO(p.data), 'dd/MM/yyyy') : '-',
     p.turnos?.nome || '-',
     p.equipamentos?.nome || '-',
     `${p.duracao} min`,
