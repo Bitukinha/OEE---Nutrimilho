@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { requireAuthorization } from '@/lib/authorizationUtils';
+import { useAuth } from '@/context/AuthContext';
 
 export interface ProdutoBloqueado {
   id: string;
@@ -73,9 +75,13 @@ export const useProdutosBloqueados = (filters?: { dataInicio?: string; dataFim?:
 
 export const useCreateProdutoBloqueado = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   return useMutation({
     mutationFn: async (produto: ProdutoBloqueadoInput) => {
+      // Verificar autorização
+      requireAuthorization(user?.email);
+      
       const { data, error } = await supabase
         .from('produtos_bloqueados')
         .insert(produto)
@@ -97,9 +103,13 @@ export const useCreateProdutoBloqueado = () => {
 
 export const useDeleteProdutoBloqueado = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   return useMutation({
     mutationFn: async (id: string) => {
+      // Verificar autorização
+      requireAuthorization(user?.email);
+      
       const { error } = await supabase
         .from('produtos_bloqueados')
         .delete()

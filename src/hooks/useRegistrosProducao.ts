@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatDateISO } from '@/lib/dateUtils';
+import { requireAuthorization } from '@/lib/authorizationUtils';
+import { useAuth } from '@/context/AuthContext';
 
 export interface RegistroProducao {
   id: string;
@@ -89,9 +91,13 @@ export const useRegistrosProducao = (filters?: { dataInicio?: string; dataFim?: 
 
 export const useCreateRegistroProducao = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   return useMutation({
     mutationFn: async (registro: RegistroProducaoInput) => {
+      // Verificar autorização
+      requireAuthorization(user?.email);
+      
       // A data vem no formato YYYY-MM-DD do input type="date"
       // Não precisamos fazer conversão, apenas usar direto
       
@@ -128,9 +134,13 @@ export const useCreateRegistroProducao = () => {
 
 export const useDeleteRegistroProducao = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   return useMutation({
     mutationFn: async (id: string) => {
+      // Verificar autorização
+      requireAuthorization(user?.email);
+      
       const { error } = await supabase
         .from('registros_producao')
         .delete()

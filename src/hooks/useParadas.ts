@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { requireAuthorization } from "@/lib/authorizationUtils";
+import { useAuth } from "@/context/AuthContext";
 
 export interface Parada {
   id: string;
@@ -77,9 +79,13 @@ export const useParadas = (filters?: {
 
 export const useCreateParada = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async (parada: ParadaInput) => {
+      // Verificar autorização
+      requireAuthorization(user?.email);
+      
       const { data, error } = await supabase
         .from("paradas")
         .insert({
@@ -104,9 +110,13 @@ export const useCreateParada = () => {
 
 export const useDeleteParada = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      // Verificar autorização
+      requireAuthorization(user?.email);
+      
       const { error } = await supabase.from("paradas").delete().eq("id", id);
 
       if (error) throw error;
