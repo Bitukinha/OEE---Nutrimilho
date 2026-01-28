@@ -27,9 +27,13 @@ INSERT INTO motivos_paradas (nome, categoria, descricao) VALUES
   ('Limpeza e ajuste', 'setup', 'Limpeza e ajuste de equipamento'),
   ('Falta de matéria-prima', 'nao_planejada', 'Parada por falta de insumos'),
   ('Falta de operador', 'nao_planejada', 'Parada por indisponibilidade de pessoal'),
+  ('Falta de Mão de Obra', 'nao_planejada', 'Parada por falta de mão de obra disponível'),
+  ('Testes (Não Planejado)', 'nao_planejada', 'Parada para testes não planejados do equipamento'),
   ('Problema elétrico', 'manutencao', 'Falha no sistema elétrico'),
   ('Problema mecânico', 'manutencao', 'Falha no sistema mecânico'),
-  ('Bloqueio de qualidade', 'nao_planejada', 'Parada para corrigir problemas de qualidade')
+  ('Bloqueio de qualidade', 'nao_planejada', 'Parada para corrigir problemas de qualidade'),
+  ('Testes (Planejado)', 'planejada', 'Parada planejada para testes do equipamento'),
+  ('Mudança de Setup', 'setup', 'Parada para mudança ou reconfiguração de setup')
 ON CONFLICT (nome) DO NOTHING;
 
 -- Inserir motivos padrão de bloqueios

@@ -7,6 +7,7 @@ import { toast } from '@/components/ui/sonner';
 import { onLocalNotify } from '@/lib/notifications';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import {
   Sheet,
   SheetContent,
@@ -19,6 +20,7 @@ const navItems = [
   { href: '/equipamentos', label: 'Segmentos' },
   { href: '/paradas', label: 'Paradas' },
   { href: '/qualidade', label: 'Qualidade' },
+  { href: '/opex', label: 'OPEX' },
   // Motivos tab removed per user request; revert to free-text input
 ];
 
@@ -38,6 +40,8 @@ const HeaderActions = () => {
 
   return (
     <div className="flex items-center gap-2">
+      <ThemeToggle />
+      
       <div className="relative" ref={bellRef}>
         <Button variant="ghost" size="icon" className="relative" onClick={() => setBellOpen((s) => !s)}>
           <Bell className="h-5 w-5" />

@@ -79,7 +79,11 @@ const MotivoForm = ({ motivo, onClose }: MotivoFormProps) => {
       if (motivo) {
         await updateMutation.mutateAsync({ ...motivo, ...data });
       } else {
-        await createMutation.mutateAsync(data);
+        await createMutation.mutateAsync({
+          nome: data.nome || '',
+          ativo: data.ativo !== false,
+          descricao: data.descricao || null,
+        });
       }
       onClose();
     } catch (error) {

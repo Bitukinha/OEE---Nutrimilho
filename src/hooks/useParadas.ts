@@ -89,6 +89,23 @@ export const useCreateParada = () => {
       // Verificar autorização
       requireAuthorization(user?.email);
       
+      // Buscar o nome do motivo se um ID foi fornecido
+      let motivoText = parada.motivo;
+      try {
+        // @ts-expect-error - motivos_paradas table is not in the base schema but exists in the database
+        const { data: motivoData } = await supabase
+          .from('motivos_paradas')
+          .select('nome')
+          .eq('id', parada.motivo)
+          .single();
+        
+        if (motivoData?.nome) {
+          motivoText = motivoData.nome;
+        }
+      } catch (e) {
+        console.warn('Could not fetch motivo name:', e);
+      }
+      
       // Build payload including only columns expected in the DB to avoid
       // sending fields that might not exist (eg. observacoes)
       const insertPayload: Record<string, any> = {
@@ -96,7 +113,7 @@ export const useCreateParada = () => {
         equipamento_id: parada.equipamento_id,
         data: parada.data,
         duracao: parada.duracao,
-        motivo: parada.motivo,
+        motivo: motivoText,
         categoria: parada.categoria || "nao_planejada",
       };
 

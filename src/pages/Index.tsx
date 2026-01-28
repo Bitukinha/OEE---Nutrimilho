@@ -6,6 +6,7 @@ import Header from '@/components/oee/Header';
 import MetricCard from '@/components/oee/MetricCard';
 import OEEGauge from '@/components/oee/OEEGauge';
 import OEEChart from '@/components/oee/OEEChart';
+import OEESegmentoChart from '@/components/oee/OEESegmentoChart';
 import ProductionTable from '@/components/oee/ProductionTable';
 import OEETurnoCard from '@/components/oee/OEETurnoCard';
 import ParetoParadas from '@/components/oee/ParetoParadas';
@@ -59,9 +60,9 @@ const Index = () => {
   const turnosOEE = oeeData?.porTurno || [];
   
   // Separar turnos por período (A/C = Diurno, B/D = Noturno)
-  const turnosDiurnos = turnosOEE.filter(t => 
-    t.turno_nome.includes('A') || t.turno_nome.includes('C')
-  );
+  const turnosDiurnos = turnosOEE
+    .filter(t => t.turno_nome.includes('A') || t.turno_nome.includes('C'))
+    .reverse(); // Inverter ordem: C (esquerda) → direita, A (direita) → esquerda
   const turnosNoturnos = turnosOEE.filter(t => 
     t.turno_nome.includes('B') || t.turno_nome.includes('D')
   );
@@ -216,6 +217,12 @@ const Index = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
+                    <Link to="/oee-periodos" className="block">
+                      <Button variant="outline" className="w-full justify-start">
+                        <History className="h-4 w-4 mr-2" />
+                        OEE por Períodos
+                      </Button>
+                    </Link>
                     <Link to="/historico" className="block">
                       <Button variant="outline" className="w-full justify-start">
                         <History className="h-4 w-4 mr-2" />
@@ -246,6 +253,11 @@ const Index = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
               <ParetoParadas />
               <ProductionTable />
+            </div>
+
+            {/* OEE por Segmento */}
+            <div className="mb-8">
+              <OEESegmentoChart dataInicio={dataFiltro} dataFim={dataFiltro} />
             </div>
 
             {/* Equipment Status */}

@@ -270,6 +270,39 @@ export type Database = {
         }
         Relationships: []
       }
+      opex: {
+        Row: {
+          id: string
+          departamento: string
+          descricao: string
+          data_inicio: string
+          data_prevista_termino: string
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          departamento: string
+          descricao: string
+          data_inicio: string
+          data_prevista_termino: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          departamento?: string
+          descricao?: string
+          data_inicio?: string
+          data_prevista_termino?: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

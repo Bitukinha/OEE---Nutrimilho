@@ -23,7 +23,8 @@ import {
 import { useCreateParada } from '@/hooks/useParadas';
 import { useTurnos } from '@/hooks/useTurnos';
 import { useEquipamentos } from '@/hooks/useEquipamentos';
-import { Plus } from 'lucide-react';
+import { useMotivoParadas, useCreateMotivoParada, useDeleteMotivoParada } from '@/hooks/useMotivos';
+import { Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 const paradaSchema = z.object({
@@ -31,7 +32,7 @@ const paradaSchema = z.object({
   equipamento_id: z.string().min(1, 'Selecione um segmento'),
   data: z.string().min(1, 'Data é obrigatória'),
   duracao: z.number().min(1, 'Duração deve ser maior que 0'),
-  motivo: z.string().min(1, 'Motivo é obrigatório'),
+  motivo: z.string().min(1, 'Selecione um motivo'),
   categoria: z.string().optional(),
   observacoes: z.string().optional(),
 });
@@ -40,10 +41,14 @@ type ParadaFormData = z.infer<typeof paradaSchema>;
 
 const ParadaForm = () => {
   const [open, setOpen] = useState(false);
+  const [openNovoMotivo, setOpenNovoMotivo] = useState(false);
+  const [novoMotivoNome, setNovoMotivoNome] = useState('');
   const createMutation = useCreateParada();
+  const createMotivoMutation = useCreateMotivoParada();
+  const deleteMotivoMutation = useDeleteMotivoParada();
   const { data: turnos } = useTurnos();
   const { data: equipamentos } = useEquipamentos();
-  // motivos are no longer fetched from DB; keep free-text motivo
+  const { data: todosMotivos } = useMotivoParadas();
 
   const {
     register,
@@ -82,6 +87,36 @@ const ParadaForm = () => {
       console.error('Error saving parada:', error);
     }
   };
+
+  const handleAdicionarMotivo = async () => {
+    if (!novoMotivoNome.trim() || !watch('categoria')) {
+      return;
+    }
+    try {
+      await createMotivoMutation.mutateAsync({
+        nome: novoMotivoNome,
+        categoria: watch('categoria') as 'nao_planejada' | 'planejada' | 'manutencao' | 'setup',
+        descricao: '',
+        ativo: true,
+      });
+      setNovoMotivoNome('');
+      setOpenNovoMotivo(false);
+    } catch (error) {
+      console.error('Error adding motivo:', error);
+    }
+  };
+
+  const handleDeletarMotivo = async (motivoId: string) => {
+    try {
+      await deleteMotivoMutation.mutateAsync(motivoId);
+    } catch (error) {
+      console.error('Error deleting motivo:', error);
+    }
+  };
+
+  // Filtrar motivos pela categoria selecionada
+  const categoriaAtual = watch('categoria');
+  const motivosFiltrados = todosMotivos?.filter(m => m.categoria === categoriaAtual) || [];
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -184,18 +219,103 @@ const ParadaForm = () => {
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="motivo">Motivo *</Label>
-            <Textarea
-              id="motivo"
-              {...register('motivo')}
-              placeholder="Descreva o motivo da parada"
-              rows={2}
-            />
-            {errors.motivo && (
-              <p className="text-sm text-destructive">{errors.motivo.message}</p>
-            )}
-          </div>
+          {categoriaAtual && (
+            <div className="space-y-2 border rounded-lg p-4 bg-muted/30">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="motivo">Motivo *</Label>
+                <Dialog open={openNovoMotivo} onOpenChange={setOpenNovoMotivo}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline" className="gap-1">
+                      <Plus className="h-3 w-3" />
+                      Novo Motivo
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[300px]">
+                    <DialogHeader>
+                      <DialogTitle>Cadastrar Novo Motivo</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="novoMotivo">Nome do Motivo</Label>
+                        <Input
+                          id="novoMotivo"
+                          placeholder="Ex: Falta de matéria-prima"
+                          value={novoMotivoNome}
+                          onChange={(e) => setNovoMotivoNome(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') handleAdicionarMotivo();
+                          }}
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setOpenNovoMotivo(false)}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={handleAdicionarMotivo}
+                          disabled={createMotivoMutation.isPending || !novoMotivoNome.trim()}
+                        >
+                          {createMotivoMutation.isPending ? 'Adicionando...' : 'Adicionar'}
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              {motivosFiltrados.length > 0 ? (
+                <Select
+                  value={watch('motivo')}
+                  onValueChange={(value) => setValue('motivo', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um motivo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {motivosFiltrados.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="text-sm text-muted-foreground py-2">
+                  Nenhum motivo cadastrado para esta categoria
+                </div>
+              )}
+
+              {motivosFiltrados.length > 0 && (
+                <div className="space-y-1 pt-2">
+                  <p className="text-xs text-muted-foreground">Motivos disponíveis:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {motivosFiltrados.map((m) => (
+                      <div
+                        key={m.id}
+                        className="flex items-center gap-1 text-xs bg-background border rounded px-2 py-1"
+                      >
+                        <span>{m.nome}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleDeletarMotivo(m.id)}
+                          disabled={deleteMotivoMutation.isPending}
+                          className="hover:text-destructive"
+                          title="Deletar motivo"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="observacoes">Observações</Label>

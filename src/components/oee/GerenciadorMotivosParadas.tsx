@@ -88,7 +88,12 @@ const MotivoForm = ({ motivo, onClose }: MotivoFormProps) => {
       if (motivo) {
         await updateMutation.mutateAsync({ ...motivo, ...data });
       } else {
-        await createMutation.mutateAsync(data);
+        await createMutation.mutateAsync({
+          nome: data.nome || '',
+          categoria: data.categoria,
+          ativo: data.ativo !== false,
+          descricao: data.descricao || null,
+        });
       }
       onClose();
     } catch (error) {
@@ -114,7 +119,7 @@ const MotivoForm = ({ motivo, onClose }: MotivoFormProps) => {
         <Label htmlFor="categoria">Categoria *</Label>
         <Select
           value={watch('categoria')}
-          onValueChange={(value) => setValue('categoria', value as any)}
+          onValueChange={(value) => setValue('categoria', value as 'nao_planejada' | 'planejada' | 'manutencao' | 'setup')}
         >
           <SelectTrigger>
             <SelectValue />
