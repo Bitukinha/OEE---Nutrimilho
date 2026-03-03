@@ -324,7 +324,7 @@ const Index = () => {
             {/* Footer */}
             <footer className="mt-12 py-6 border-t border-border text-center">
               <p className="text-sm text-muted-foreground">
-                © 2024 Nutrimilho - Sistema de Gestão OEE (Jean Novaes) | Todos os direitos reservados
+                © 2026 Nutrimilho - Sistema de Gestão OEE (Novaes Tech) | Todos os direitos reservados
               </p>
             </footer>
           </>

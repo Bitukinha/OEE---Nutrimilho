@@ -79,4 +79,4 @@ Para fazer deploy na Vercel:
 
 ## Licença
 
-© 2024 Nutrimilho - Sistema de Gestão OEE (Jean Novaes)
+© 2026 Nutrimilho - Sistema de Gestão OEE (Novaes Tech)
