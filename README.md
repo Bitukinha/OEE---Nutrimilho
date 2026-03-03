@@ -49,6 +49,22 @@ npm install
 npm run dev
 ```
 
+### Backup do banco de dados
+
+O repositório inclui um script de exemplo em `scripts/backup-db.sh`. Basta definir a variável de ambiente `SUPABASE_DB_URL` com a URL de conexão (ex: `postgres://user:password@host:port/dbname`) e executar:
+
+```sh
+# em *nix ou WSL/Git Bash no Windows
+./scripts/backup-db.sh dump-$(date +%Y%m%d).dump
+```
+
+O arquivo gerado estará em formato custom e pode ser restaurado com `pg_restore`. Você também pode chamar `pg_dump` diretamente:
+
+```sh
+pg_dump --format=custom --file=meu_backup.dump "$SUPABASE_DB_URL"
+```
+
+```
 O projeto estará disponível em `http://localhost:8082`
 
 ## Deploy

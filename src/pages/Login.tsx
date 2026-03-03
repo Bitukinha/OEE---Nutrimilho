@@ -22,9 +22,6 @@ const Login = () => {
       if (res?.error) {
         const msg = res.error.message || "Erro ao entrar";
         toast.error(msg);
-        if (msg.includes("Invalid") || msg.includes("credentials")) {
-          toast.info("Verifique e-mail e senha. Se acabou de se cadastrar, confirme o e-mail pelo link enviado.");
-        }
       } else {
         toast.success("Entrou com sucesso");
         navigate("/");

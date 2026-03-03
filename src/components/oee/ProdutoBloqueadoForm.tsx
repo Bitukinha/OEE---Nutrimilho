@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -49,6 +50,9 @@ const DESTINOS_COMUNS = [
 ];
 
 const ProdutoBloqueadoForm = () => {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return null;  // apenas admins podem registrar bloqueios
+
   const [open, setOpen] = useState(false);
   const createMutation = useCreateProdutoBloqueado();
   const { data: equipamentos } = useEquipamentos();

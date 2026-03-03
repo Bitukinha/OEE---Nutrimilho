@@ -28,6 +28,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+
+  // assign a basic role based on email
+  const assignRole = (email: string | null | undefined) => {
+    if (!email) return null;
+    if (email.toLowerCase() === 'jeannovaes040@gmail.com') return 'admin';
+    return 'viewer';
+  };
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,7 +44,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const { data } = await supabase.auth.getSession();
         if (!mounted) return;
-        setUser(data.session?.user ? { id: data.session.user.id, email: data.session.user.email } : null);
+        if (data.session?.user) {
+          const u = data.session.user;
+          setUser({ id: u.id, email: u.email, role: assignRole(u.email) });
+        } else {
+          setUser(null);
+        }
       } catch (e) {
         console.warn('Auth: falha ao obter sessão (verifique VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY)', e);
         if (mounted) setUser(null);
@@ -49,8 +61,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     getSession();
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ? { id: session.user.id, email: session.user.email } : null);
-      setLoading(false);
+      if (session?.user) {
+        const u = session.user;
+        setUser({ id: u.id, email: u.email, role: assignRole(u.email) });
+      } else {
+        setUser(null);
+      }
     });
 
     return () => {

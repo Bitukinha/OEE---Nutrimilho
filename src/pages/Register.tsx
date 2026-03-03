@@ -17,7 +17,7 @@ const Register = () => {
     if (res?.error) {
       toast.error(res.error.message || "Erro ao cadastrar");
     } else {
-      toast.success("Cadastro efetuado. Verifique seu email para confirmação.");
+      toast.success("Cadastro efetuado.");
       navigate("/");
     }
   };

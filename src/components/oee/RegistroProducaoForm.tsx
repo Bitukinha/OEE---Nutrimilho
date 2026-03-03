@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -41,6 +42,9 @@ const registroSchema = z.object({
 type RegistroFormData = z.infer<typeof registroSchema>;
 
 const RegistroProducaoForm = () => {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return null;  // apenas admins podem criar registros
+
   const [open, setOpen] = useState(false);
   const createMutation = useCreateRegistroProducao();
   const { data: equipamentos } = useEquipamentos();

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -40,6 +41,9 @@ const paradaSchema = z.object({
 type ParadaFormData = z.infer<typeof paradaSchema>;
 
 const ParadaForm = () => {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return null;  // apenas admins podem registrar paradas
+
   const [open, setOpen] = useState(false);
   const [openNovoMotivo, setOpenNovoMotivo] = useState(false);
   const [novoMotivoNome, setNovoMotivoNome] = useState('');
