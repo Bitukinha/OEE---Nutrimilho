@@ -1,7 +1,7 @@
 export interface ProductionData {
   id: string;
   date: string;
-  shift: 'Manhã' | 'Tarde' | 'Noite';
+  shift: 'Manhã' | 'Tarde' | 'Noite' | 'Turno D';
   equipment: string;
   plannedTime: number; // minutos
   actualTime: number; // minutos

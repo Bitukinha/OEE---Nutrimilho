@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { requireAuthorization } from '@/lib/authorizationUtils';
+import { isAuthorizedForChanges } from '@/lib/authorizationUtils';
 import { useAuth } from '@/context/AuthContext';
 
 export interface Equipamento {
@@ -26,13 +26,20 @@ export const useEquipamentos = () => {
   return useQuery({
     queryKey: ['equipamentos'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('equipamentos')
-        .select('*')
-        .order('nome');
-      
-      if (error) throw error;
-      return data as Equipamento[];
+      try {
+        const { data, error } = await supabase
+          .from('equipamentos')
+          .select('*')
+          .order('nome');
+        if (error) {
+          console.warn('Erro ao buscar segmentos:', error);
+          return [];
+        }
+        return (data ?? []) as Equipamento[];
+      } catch (err) {
+        console.warn('Erro ao buscar segmentos:', err);
+        return [];
+      }
     },
   });
 };
@@ -43,9 +50,10 @@ export const useCreateEquipamento = () => {
   
   return useMutation({
     mutationFn: async (equipamento: EquipamentoInput) => {
-      // Verificar autorização
-      requireAuthorization(user?.email);
-      
+      if (!isAuthorizedForChanges(user?.email)) {
+        toast.error('Acesso negado. Apenas usuários autorizados podem criar ou editar segmentos.');
+        throw new Error('Não autorizado');
+      }
       const { data, error } = await supabase
         .from('equipamentos')
         .insert(equipamento)
@@ -71,9 +79,10 @@ export const useUpdateEquipamento = () => {
   
   return useMutation({
     mutationFn: async ({ id, ...equipamento }: Partial<Equipamento> & { id: string }) => {
-      // Verificar autorização
-      requireAuthorization(user?.email);
-      
+      if (!isAuthorizedForChanges(user?.email)) {
+        toast.error('Acesso negado. Apenas usuários autorizados podem editar segmentos.');
+        throw new Error('Não autorizado');
+      }
       const { data, error } = await supabase
         .from('equipamentos')
         .update(equipamento)
@@ -100,9 +109,10 @@ export const useDeleteEquipamento = () => {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      // Verificar autorização
-      requireAuthorization(user?.email);
-      
+      if (!isAuthorizedForChanges(user?.email)) {
+        toast.error('Acesso negado. Apenas usuários autorizados podem excluir segmentos.');
+        throw new Error('Não autorizado');
+      }
       const { error } = await supabase
         .from('equipamentos')
         .delete()

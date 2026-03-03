@@ -13,12 +13,24 @@ const Login = () => {
 
   const handleEmailSign = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await signInWithEmail(email, password);
-    if (res?.error) {
-      toast.error(res.error.message || "Erro ao entrar");
-    } else {
-      toast.success("Entrou com sucesso");
-      navigate("/");
+    if (!email.trim() || !password) {
+      toast.error("Preencha e-mail e senha.");
+      return;
+    }
+    try {
+      const res = await signInWithEmail(email, password);
+      if (res?.error) {
+        const msg = res.error.message || "Erro ao entrar";
+        toast.error(msg);
+        if (msg.includes("Invalid") || msg.includes("credentials")) {
+          toast.info("Verifique e-mail e senha. Se acabou de se cadastrar, confirme o e-mail pelo link enviado.");
+        }
+      } else {
+        toast.success("Entrou com sucesso");
+        navigate("/");
+      }
+    } catch (err) {
+      toast.error("Falha ao conectar. Verifique se o Supabase está configurado (.env com VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY).");
     }
   };
 

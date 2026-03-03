@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { emitLocalNotification } from '@/lib/notifications';
 import { formatDateISO } from '@/lib/dateUtils';
-import { requireAuthorization } from '@/lib/authorizationUtils';
+import { isAuthorizedForChanges } from '@/lib/authorizationUtils';
 import { useAuth } from '@/context/AuthContext';
 
 export interface RegistroProducao {
@@ -81,13 +81,11 @@ export const useRegistrosProducao = (filters?: { dataInicio?: string; dataFim?: 
       }
       
       const { data, error } = await query;
-      
       if (error) {
-        console.error('Erro ao buscar registros de produção:', error);
-        throw error;
+        console.warn('Erro ao buscar registros de produção:', error);
+        return [];
       }
-      console.log('Registros de produção carregados:', data?.length || 0);
-      return data as RegistroProducao[];
+      return (data ?? []) as RegistroProducao[];
     },
   });
 };
@@ -98,9 +96,10 @@ export const useCreateRegistroProducao = () => {
   
   return useMutation({
     mutationFn: async (registro: RegistroProducaoInput) => {
-      // Verificar autorização
-      requireAuthorization(user?.email);
-      
+      if (!isAuthorizedForChanges(user?.email)) {
+        toast.error('Acesso negado. Apenas usuários autorizados podem criar registros de produção.');
+        throw new Error('Não autorizado');
+      }
       // A data vem no formato YYYY-MM-DD do input type="date"
       // Não precisamos fazer conversão, apenas usar direto
       
@@ -125,10 +124,8 @@ export const useCreateRegistroProducao = () => {
       // OEE = disponibilidade * performance * qualidade / 10000 -> normalized to percent
       const oee = Number(((disponibilidade * performance * qualidade) / 10000).toFixed(1));
 
-      // The DB defines some columns (disponibilidade, performance, qualidade, oee)
-      // as generated columns. Do not attempt to insert values into them — let
-      // the database compute them. Insert only the base fields and tempo values.
-      const insertPayload: Record<string, any> = {
+      // O banco define algumas colunas como geradas; inserir apenas campos base e tempos
+      const insertPayload = {
         data: registro.data,
         equipamento_id: registro.equipamento_id,
         turno_id: registro.turno_id,
@@ -182,9 +179,10 @@ export const useDeleteRegistroProducao = () => {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      // Verificar autorização
-      requireAuthorization(user?.email);
-      
+      if (!isAuthorizedForChanges(user?.email)) {
+        toast.error('Acesso negado. Apenas usuários autorizados podem excluir registros.');
+        throw new Error('Não autorizado');
+      }
       console.log('🗑️ Deletando registro:', id);
       
       const { error, data } = await supabase
@@ -237,14 +235,21 @@ export const useOEEMetrics = () => {
         .order('data', { ascending: false })
         .limit(30);
 
-      if (error) throw error;
+      if (error) {
+        console.warn('Erro ao buscar métricas OEE:', error);
+        return { disponibilidade: 0, performance: 0, qualidade: 0, oee: 0 };
+      }
 
       if (!registros || registros.length === 0) {
         return { disponibilidade: 0, performance: 0, qualidade: 0, oee: 0 };
       }
 
-      const sums = registros.reduce((acc, r: any) => {
-        const paradasSum = r.paradas?.reduce((a: number, p: any) => a + (p.duracao || 0), 0) || 0;
+      const registrosTyped = registros as RegistroProducao[];
+
+      const sums = registrosTyped.reduce(
+        (acc, r) => {
+          const paradas = r.paradas ?? [];
+          const paradasSum = paradas.reduce((a, p) => a + (p.duracao || 0), 0);
         const disponibilidade = r.tempo_planejado > 0 ? Math.max(0, ((r.tempo_planejado - paradasSum) / r.tempo_planejado) * 100) : 0;
         const metaKg = (r.equipamentos && r.equipamentos.capacidade_hora) || r.capacidade_hora || 0;
         const performance = metaKg > 0 ? Math.min(100, (r.total_produzido / metaKg) * 100) : 0;
@@ -252,12 +257,14 @@ export const useOEEMetrics = () => {
         const qualidade = r.total_produzido > 0 ? Math.max(0, (unidadesBoas / r.total_produzido) * 100) : 0;
         const oee = ((disponibilidade / 100) * (performance / 100) * (qualidade / 100)) * 100;
 
-        acc.disponibilidade += disponibilidade;
-        acc.performance += performance;
-        acc.qualidade += qualidade;
-        acc.oee += oee;
-        return acc;
-      }, { disponibilidade: 0, performance: 0, qualidade: 0, oee: 0 });
+          acc.disponibilidade += disponibilidade;
+          acc.performance += performance;
+          acc.qualidade += qualidade;
+          acc.oee += oee;
+          return acc;
+        },
+        { disponibilidade: 0, performance: 0, qualidade: 0, oee: 0 },
+      );
 
       const len = registros.length;
       return {

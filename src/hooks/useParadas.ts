@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { emitLocalNotification } from '@/lib/notifications';
-import { requireAuthorization } from "@/lib/authorizationUtils";
+import { isAuthorizedForChanges } from "@/lib/authorizationUtils";
 import { useAuth } from "@/context/AuthContext";
 
 export interface Parada {
@@ -68,13 +68,11 @@ export const useParadas = (filters?: {
       }
 
       const { data, error } = await query;
-
       if (error) {
-        console.error('Erro ao buscar paradas:', error);
-        throw error;
+        console.warn('Erro ao buscar paradas:', error);
+        return [];
       }
-      console.log('Paradas carregadas:', data?.length || 0);
-      return data as Parada[];
+      return (data ?? []) as Parada[];
     },
   });
 };
@@ -85,10 +83,10 @@ export const useCreateParada = () => {
 
   return useMutation({
     mutationFn: async (parada: ParadaInput) => {
-      console.log('Attempting to create parada, payload:', parada, 'user:', user?.email);
-      // Verificar autorização
-      requireAuthorization(user?.email);
-      
+      if (!isAuthorizedForChanges(user?.email)) {
+        toast.error('Acesso negado. Apenas usuários autorizados podem registrar paradas.');
+        throw new Error('Não autorizado');
+      }
       // Buscar o nome do motivo se um ID foi fornecido
       let motivoText = parada.motivo;
       try {
@@ -106,9 +104,8 @@ export const useCreateParada = () => {
         console.warn('Could not fetch motivo name:', e);
       }
       
-      // Build payload including only columns expected in the DB to avoid
-      // sending fields that might not exist (eg. observacoes)
-      const insertPayload: Record<string, any> = {
+      // Build payload incluindo apenas colunas esperadas no banco
+      const insertPayload = {
         turno_id: parada.turno_id,
         equipamento_id: parada.equipamento_id,
         data: parada.data,
@@ -182,9 +179,10 @@ export const useDeleteParada = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      // Verificar autorização
-      requireAuthorization(user?.email);
-      
+      if (!isAuthorizedForChanges(user?.email)) {
+        toast.error('Acesso negado. Apenas usuários autorizados podem excluir paradas.');
+        throw new Error('Não autorizado');
+      }
       console.log('🗑️ Deletando parada:', id);
       
       const { error, data } = await supabase.from("paradas").delete().eq("id", id).select();

@@ -52,12 +52,28 @@ export async function seedTestData() {
           { nome: 'Manhã', hora_inicio: '06:00', hora_fim: '14:00' },
           { nome: 'Tarde', hora_inicio: '14:00', hora_fim: '22:00' },
           { nome: 'Noite', hora_inicio: '22:00', hora_fim: '06:00' },
+          { nome: 'Turno D', hora_inicio: '19:00', hora_fim: '07:00' },
         ]);
       
       if (insertTError) {
         console.error('❌ Erro ao inserir turnos:', insertTError);
       } else {
         console.log('✅ Turnos inseridos com sucesso');
+      }
+    } else {
+      // make sure all expected turnos are present
+      const expected = [
+        { nome: 'Manhã', hora_inicio: '06:00', hora_fim: '14:00' },
+        { nome: 'Tarde', hora_inicio: '14:00', hora_fim: '22:00' },
+        { nome: 'Noite', hora_inicio: '22:00', hora_fim: '06:00' },
+        { nome: 'Turno D', hora_inicio: '00:00', hora_fim: '06:00' },
+      ];
+      for (const t of expected) {
+        const exists = turnos.find((x: any) => x.nome === t.nome);
+        if (!exists) {
+          console.log(`⚠️ Turno ${t.nome} ausente. Inserindo...`);
+          await supabase.from('turnos').insert(t);
+        }
       }
     }
 

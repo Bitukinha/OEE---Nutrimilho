@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { emitLocalNotification } from '@/lib/notifications';
-import { requireAuthorization } from '@/lib/authorizationUtils';
+import { isAuthorizedForChanges } from '@/lib/authorizationUtils';
 import { useAuth } from '@/context/AuthContext';
 
 export interface ProdutoBloqueado {
@@ -63,13 +63,11 @@ export const useProdutosBloqueados = (filters?: { dataInicio?: string; dataFim?:
       }
       
       const { data, error } = await query;
-      
       if (error) {
-        console.error('Erro ao buscar produtos bloqueados:', error);
-        throw error;
+        console.warn('Erro ao buscar produtos bloqueados:', error);
+        return [];
       }
-      console.log('Produtos bloqueados carregados:', data?.length || 0);
-      return data as ProdutoBloqueado[];
+      return (data ?? []) as ProdutoBloqueado[];
     },
   });
 };
@@ -80,12 +78,12 @@ export const useCreateProdutoBloqueado = () => {
   
   return useMutation({
     mutationFn: async (produto: ProdutoBloqueadoInput) => {
-      // Verificar autorização
-      requireAuthorization(user?.email);
-      
-      // Only include fields that are expected in the DB schema to avoid
-      // sending unknown columns (which cause 400 errors).
-      const insertPayload: Record<string, any> = {
+      if (!isAuthorizedForChanges(user?.email)) {
+        toast.error('Acesso negado. Apenas usuários autorizados podem registrar produtos bloqueados.');
+        throw new Error('Não autorizado');
+      }
+      // Incluir apenas campos esperados pelo schema do banco
+      const insertPayload = {
         data: produto.data,
         turno_id: produto.turno_id,
         equipamento_id: produto.equipamento_id,
@@ -135,9 +133,10 @@ export const useDeleteProdutoBloqueado = () => {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      // Verificar autorização
-      requireAuthorization(user?.email);
-      
+      if (!isAuthorizedForChanges(user?.email)) {
+        toast.error('Acesso negado. Apenas usuários autorizados podem excluir registros de qualidade.');
+        throw new Error('Não autorizado');
+      }
       console.log('🗑️ Deletando produto bloqueado:', id);
       
       const { error, data } = await supabase
@@ -183,9 +182,10 @@ export const useQualidadeMetrics = () => {
       const { data, error } = await supabase
         .from('produtos_bloqueados')
         .select('quantidade, destino, motivo_bloqueio');
-      
-      if (error) throw error;
-      
+      if (error) {
+        console.warn('Erro ao buscar métricas de qualidade:', error);
+        return { totalBloqueado: 0, porDestino: {}, porMotivo: {} };
+      }
       const total = data?.reduce((acc, item) => acc + item.quantidade, 0) || 0;
       
       // Agrupar por destino

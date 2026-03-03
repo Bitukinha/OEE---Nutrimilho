@@ -22,17 +22,26 @@ export interface OEEGeral {
 
 const TEMPO_TURNO = 720; // 720 minutos por turno (12 horas)
 
+const emptyResult = () => ({
+  porTurno: [] as OEETurno[],
+  geral: { disponibilidade: 0, performance: 0, qualidade: 0, oee: 0 },
+});
+
 export const useOEEPorTurno = (dataInicio?: string, dataFim?: string) => {
   return useQuery({
     queryKey: ['oee_por_turno', dataInicio, dataFim],
     queryFn: async () => {
-      // Buscar todos os turnos
-      const { data: turnos, error: turnosError } = await supabase
-        .from('turnos')
-        .select('id, nome, meta_oee')
-        .order('hora_inicio');
+      try {
+        // Buscar todos os turnos
+        const { data: turnos, error: turnosError } = await supabase
+          .from('turnos')
+          .select('id, nome, meta_oee')
+          .order('hora_inicio');
 
-      if (turnosError) throw turnosError;
+        if (turnosError) {
+          console.warn('OEE: erro ao buscar turnos', turnosError);
+          return emptyResult();
+        }
 
       // Buscar registros de produção
       let registrosQuery = supabase
@@ -46,8 +55,11 @@ export const useOEEPorTurno = (dataInicio?: string, dataFim?: string) => {
         registrosQuery = registrosQuery.lte('data', dataFim);
       }
 
-      const { data: registros, error: registrosError } = await registrosQuery;
-      if (registrosError) throw registrosError;
+        const { data: registros, error: registrosError } = await registrosQuery;
+        if (registrosError) {
+          console.warn('OEE: erro ao buscar registros', registrosError);
+          return emptyResult();
+        }
 
       // Buscar paradas (incluir registro_id para associar por registro)
       let paradasQuery = supabase
@@ -61,8 +73,11 @@ export const useOEEPorTurno = (dataInicio?: string, dataFim?: string) => {
         paradasQuery = paradasQuery.lte('data', dataFim);
       }
 
-      const { data: paradas, error: paradasError } = await paradasQuery;
-      if (paradasError) throw paradasError;
+        const { data: paradas, error: paradasError } = await paradasQuery;
+        if (paradasError) {
+          console.warn('OEE: erro ao buscar paradas', paradasError);
+          return emptyResult();
+        }
 
       // Buscar produtos bloqueados
       let bloqueadosQuery = supabase
@@ -76,8 +91,11 @@ export const useOEEPorTurno = (dataInicio?: string, dataFim?: string) => {
         bloqueadosQuery = bloqueadosQuery.lte('data', dataFim);
       }
 
-      const { data: bloqueados, error: bloqueadosError } = await bloqueadosQuery;
-      if (bloqueadosError) throw bloqueadosError;
+        const { data: bloqueados, error: bloqueadosError } = await bloqueadosQuery;
+        if (bloqueadosError) {
+          console.warn('OEE: erro ao buscar bloqueados', bloqueadosError);
+          return emptyResult();
+        }
 
       // Agrupar paradas por turno e por registro
       const paradasPorTurno: Record<string, number> = {};
@@ -186,10 +204,14 @@ export const useOEEPorTurno = (dataInicio?: string, dataFim?: string) => {
           acc + t.oee * t.total_registros, 0) / totalRegistros).toFixed(1)),
       } : { disponibilidade: 0, performance: 0, qualidade: 0, oee: 0 };
 
-      return {
-        porTurno: oeePorTurno,
-        geral: oeeGeral,
-      };
+        return {
+          porTurno: oeePorTurno,
+          geral: oeeGeral,
+        };
+      } catch (err) {
+        console.warn('OEE: falha ao carregar dados', err);
+        return emptyResult();
+      }
     },
   });
 };

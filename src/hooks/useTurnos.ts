@@ -14,13 +14,20 @@ export const useTurnos = () => {
   return useQuery({
     queryKey: ['turnos'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('turnos')
-        .select('*')
-        .order('hora_inicio');
-      
-      if (error) throw error;
-      return data as Turno[];
+      try {
+        const { data, error } = await supabase
+          .from('turnos')
+          .select('*')
+          .order('hora_inicio');
+        if (error) {
+          console.warn('Erro ao buscar turnos:', error);
+          return [];
+        }
+        return (data ?? []) as Turno[];
+      } catch (err) {
+        console.warn('Erro ao buscar turnos:', err);
+        return [];
+      }
     },
   });
 };

@@ -20,7 +20,7 @@ export const useOPEX = () => {
     queryKey: ['OPEX'],
     queryFn: async () => {
       const { data, error } = await (supabase as unknown as any)
-        .from('opex')
+        .from('operacoes_extras')
         .select('*')
         .order('data_prevista_termino', { ascending: true });
 
@@ -38,7 +38,7 @@ export const useCreateOPEX = () => {
   return useMutation({
     mutationFn: async (OPEX: Omit<OPEX, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await (supabase as unknown as any)
-        .from('opex')
+        .from('operacoes_extras')
         .insert([OPEX as unknown])
         .select();
 
@@ -62,7 +62,7 @@ export const useUpdateOPEX = () => {
   return useMutation({
     mutationFn: async ({ id, ...OPEX }: OPEX) => {
       const { data, error } = await (supabase as unknown as any)
-        .from('opex')
+        .from('operacoes_extras')
         .update(OPEX as unknown)
         .eq('id', id)
         .select()
@@ -88,7 +88,7 @@ export const useDeleteOPEX = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await (supabase as unknown as any)
-        .from('opex')
+        .from('operacoes_extras')
         .delete()
         .eq('id', id);
 

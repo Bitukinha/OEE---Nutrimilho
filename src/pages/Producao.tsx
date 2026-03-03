@@ -225,7 +225,8 @@ const Producao = () => {
                     {registros.map((registro) => {
                       // Compute metrics client-side using Meta (kg) as the performance driver
                       const metaKg = registro.capacidade_hora || 0;
-                      const paradasSum = registro.paradas?.reduce((acc: number, p: any) => acc + (p.duracao || 0), 0) || 0;
+                      const paradas = registro.paradas ?? [];
+                      const paradasSum = paradas.reduce((acc, p) => acc + (p.duracao || 0), 0);
                       const disponibilidadeCalc = registro.tempo_planejado > 0
                         ? Math.max(0, ((registro.tempo_planejado - paradasSum) / registro.tempo_planejado) * 100)
                         : 0;

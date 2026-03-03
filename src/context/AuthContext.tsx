@@ -34,10 +34,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let mounted = true;
 
     const getSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!mounted) return;
-      setUser(data.session?.user ? { id: data.session.user.id, email: data.session.user.email } : null);
-      setLoading(false);
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!mounted) return;
+        setUser(data.session?.user ? { id: data.session.user.id, email: data.session.user.email } : null);
+      } catch (e) {
+        console.warn('Auth: falha ao obter sessão (verifique VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY)', e);
+        if (mounted) setUser(null);
+      } finally {
+        if (mounted) setLoading(false);
+      }
     };
 
     getSession();

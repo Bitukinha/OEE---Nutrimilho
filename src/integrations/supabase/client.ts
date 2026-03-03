@@ -2,13 +2,30 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').trim();
+// Aceita Anon key (JWT) ou Publishable key; o SDK costuma funcionar melhor com a Anon key (Legacy)
+const SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').trim();
+const SUPABASE_PUBLISHABLE_KEY = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? '').trim();
+const SUPABASE_KEY = SUPABASE_ANON_KEY || SUPABASE_PUBLISHABLE_KEY;
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
+// Avisar se a URL do Supabase estiver faltando ou inválida
+if (!SUPABASE_URL || !SUPABASE_URL.startsWith('https://')) {
+  console.error(
+    '[Supabase] Configure VITE_SUPABASE_URL no .env. Exemplo: VITE_SUPABASE_URL=https://SEU_PROJETO.supabase.co'
+  );
+}
+if (SUPABASE_URL && SUPABASE_URL.includes('@')) {
+  console.error(
+    '[Supabase] A URL não pode conter "@". Use apenas: https://SEU_PROJETO.supabase.co'
+  );
+}
+if (!SUPABASE_KEY) {
+  console.error(
+    '[Supabase] Configure VITE_SUPABASE_ANON_KEY no .env com a chave "Anon key (Legacy)" da aba API Keys (a longa que começa com eyJ...)'
+  );
+}
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
     storage: localStorage,
     persistSession: true,

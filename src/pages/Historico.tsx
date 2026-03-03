@@ -10,9 +10,9 @@ import { useOEEHistorico } from '@/hooks/useOEEHistorico';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, Cell, ReferenceLine } from 'recharts';
 
 const TURNO_COLORS: Record<string, string> = {
-  'Turno A': 'hsl(142, 76%, 36%)',
-  'Turno B': 'hsl(45, 93%, 47%)',
-  'Turno C': 'hsl(200, 80%, 50%)',
+  'Manhã': 'hsl(142, 76%, 36%)',
+  'Tarde': 'hsl(45, 93%, 47%)',
+  'Noite': 'hsl(200, 80%, 50%)',
   'Turno D': 'hsl(280, 60%, 50%)',
 };
 

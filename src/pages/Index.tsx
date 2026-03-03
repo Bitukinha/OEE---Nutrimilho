@@ -10,6 +10,7 @@ import OEESegmentoChart from '@/components/oee/OEESegmentoChart';
 import ProductionTable from '@/components/oee/ProductionTable';
 import OEETurnoCard from '@/components/oee/OEETurnoCard';
 import ParetoParadas from '@/components/oee/ParetoParadas';
+import DashboardOEEPeriodos from '@/components/oee/DashboardOEEPeriodos';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -198,12 +199,17 @@ const Index = () => {
                   </div>
                 ))}
               </div>
-              {turnosNoturnos.length === 0 && (
-                <p className="text-center text-muted-foreground py-4">
-                  Nenhum dado para turnos noturnos
-                </p>
-              )}
             </div>
+
+            {/* Gráfico de períodos mensais/semanais/anuais */}
+            <div className="mb-12">
+              <DashboardOEEPeriodos />
+            </div>
+            {turnosNoturnos.length === 0 && (
+              <p className="text-center text-muted-foreground py-4">
+                Nenhum dado para turnos noturnos
+              </p>
+            )}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
               <div className="lg:col-span-2">
                 <OEEChart />

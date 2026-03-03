@@ -117,7 +117,8 @@ CREATE TRIGGER update_registros_producao_updated_at
 INSERT INTO public.turnos (nome, hora_inicio, hora_fim) VALUES
   ('Manhã', '06:00:00', '14:00:00'),
   ('Tarde', '14:00:00', '22:00:00'),
-  ('Noite', '22:00:00', '06:00:00');
+  ('Noite', '22:00:00', '06:00:00'),
+  ('Turno D', '19:00:00', '07:00:00');
 
 -- Insert sample equipment
 INSERT INTO public.equipamentos (nome, codigo, ciclo_ideal, capacidade_hora) VALUES

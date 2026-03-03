@@ -22,21 +22,27 @@ export const exportOEEReport = async (
   // Calculate metrics from the registros being displayed (not from separate hook)
   let calculatedMetrics = { disponibilidade: 0, performance: 0, qualidade: 0, oee: 0 };
   if (registros && registros.length > 0) {
-    const sums = registros.reduce((acc: any, r: any) => {
-      const paradasSum = r.paradas?.reduce((a: number, p: any) => a + (p.duracao || 0), 0) || 0;
-      const disponibilidade = r.tempo_planejado > 0 ? Math.max(0, ((r.tempo_planejado - paradasSum) / r.tempo_planejado) * 100) : 0;
-      const metaKg = (r.equipamentos && r.equipamentos.capacidade_hora) || r.capacidade_hora || 0;
-      const performance = metaKg > 0 ? Math.min(100, (r.total_produzido / metaKg) * 100) : 0;
-      const unidadesBoas = Math.max(0, (r.total_produzido - (r.defeitos || 0)));
-      const qualidade = r.total_produzido > 0 ? Math.max(0, (unidadesBoas / r.total_produzido) * 100) : 0;
-      const oee = ((disponibilidade / 100) * (performance / 100) * (qualidade / 100)) * 100;
+    const sums = registros.reduce(
+      (acc, r) => {
+        const paradas = r.paradas ?? [];
+        const paradasSum = paradas.reduce((a, p) => a + (p.duracao || 0), 0);
+        const disponibilidade =
+          r.tempo_planejado > 0 ? Math.max(0, ((r.tempo_planejado - paradasSum) / r.tempo_planejado) * 100) : 0;
+        const metaKg = (r.equipamentos && r.equipamentos.capacidade_hora) || r.capacidade_hora || 0;
+        const performance = metaKg > 0 ? Math.min(100, (r.total_produzido / metaKg) * 100) : 0;
+        const unidadesBoas = Math.max(0, r.total_produzido - (r.defeitos || 0));
+        const qualidade =
+          r.total_produzido > 0 ? Math.max(0, (unidadesBoas / r.total_produzido) * 100) : 0;
+        const oee = ((disponibilidade / 100) * (performance / 100) * (qualidade / 100)) * 100;
 
-      acc.disponibilidade += disponibilidade;
-      acc.performance += performance;
-      acc.qualidade += qualidade;
-      acc.oee += oee;
-      return acc;
-    }, { disponibilidade: 0, performance: 0, qualidade: 0, oee: 0 });
+        acc.disponibilidade += disponibilidade;
+        acc.performance += performance;
+        acc.qualidade += qualidade;
+        acc.oee += oee;
+        return acc;
+      },
+      { disponibilidade: 0, performance: 0, qualidade: 0, oee: 0 },
+    );
 
     const len = registros.length;
     calculatedMetrics = {
@@ -305,7 +311,8 @@ export const exportQualidadeReport = async (
   }
   
   // Distribution by reason (Pareto)
-  const currentY = (doc as any).lastAutoTable?.finalY || 135;
+  const docWithAutoTable = doc as unknown as { lastAutoTable?: { finalY: number } };
+  const currentY = docWithAutoTable.lastAutoTable?.finalY || 135;
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
   doc.text('Pareto - Motivos de Bloqueio', 14, currentY + 15);
@@ -330,7 +337,7 @@ export const exportQualidadeReport = async (
   }
   
   // Products table
-  const tableStartY = (doc as any).lastAutoTable?.finalY || currentY + 40;
+  const tableStartY = docWithAutoTable.lastAutoTable?.finalY || currentY + 40;
   
   if (tableStartY > 200) {
     doc.addPage();
@@ -531,7 +538,8 @@ export const exportParadasReport = async (
   }
   
   // Paradas table
-  const tableStartY = (doc as any).lastAutoTable?.finalY || 145;
+  const docWithAutoTable = doc as unknown as { lastAutoTable?: { finalY: number } };
+  const tableStartY = docWithAutoTable.lastAutoTable?.finalY || 145;
   
   if (tableStartY > 200) {
     doc.addPage();
