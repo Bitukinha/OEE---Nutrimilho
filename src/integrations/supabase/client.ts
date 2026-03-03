@@ -2,10 +2,10 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').trim();
+const SUPABASE_URL = (import.meta.env.vite_supabase_url ?? '').trim();
 // Aceita Anon key (JWT) ou Publishable key; o SDK costuma funcionar melhor com a Anon key (Legacy)
-const SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').trim();
-const SUPABASE_PUBLISHABLE_KEY = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? '').trim();
+const SUPABASE_ANON_KEY = (import.meta.env.vite_supabase_anon_key ?? '').trim();
+const SUPABASE_PUBLISHABLE_KEY = (import.meta.env.vite_supabase_publishable_key ?? '').trim();
 const SUPABASE_KEY = SUPABASE_ANON_KEY || SUPABASE_PUBLISHABLE_KEY;
 
 // Avisar se a URL do Supabase estiver faltando ou inválida
