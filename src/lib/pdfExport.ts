@@ -130,15 +130,23 @@ export const exportOEEReport = async (
   doc.setFont('helvetica', 'bold');
   doc.text('Registros de Produção', 14, 115);
   
-  const tableData = registros.map((r) => [
-    r.data ? format(parseISO(r.data), 'dd/MM/yyyy') : '-',
-    r.turnos?.nome || '-',
-    r.equipamentos?.nome || '-',
-    `${Number(r.disponibilidade).toFixed(1)}%`,
-    `${Number(r.performance).toFixed(1)}%`,
-    `${Number(r.qualidade).toFixed(1)}%`,
-    `${Number(r.oee).toFixed(1)}%`,
-  ]);
+  const tableData = registros.map((r) => {
+    const metaKg = (r.equipamentos && r.equipamentos.capacidade_hora) || r.capacidade_hora || 0;
+    const performance = metaKg > 0 ? Math.min(100, (r.total_produzido / metaKg) * 100) : 0;
+    const disponibilidade = Number(r.disponibilidade);
+    const qualidade = Number(r.qualidade);
+    const oee = ((disponibilidade / 100) * (performance / 100) * (qualidade / 100)) * 100;
+
+    return [
+      r.data ? format(parseISO(r.data), 'dd/MM/yyyy') : '-',
+      r.turnos?.nome || '-',
+      r.equipamentos?.nome || '-',
+      `${disponibilidade.toFixed(1)}%`,
+      `${performance.toFixed(1)}%`,
+      `${qualidade.toFixed(1)}%`,
+      `${oee.toFixed(1)}%`,
+    ];
+  });
   
   autoTable(doc, {
     startY: 120,

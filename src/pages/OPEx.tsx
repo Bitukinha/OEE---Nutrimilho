@@ -223,12 +223,7 @@ const OPExPage = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>Status</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value: "pendente" | "em_progresso" | "pronto") =>
-                      setFormData({ ...formData, status: value })
-                    }
-                  >
+                  <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>

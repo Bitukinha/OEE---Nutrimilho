@@ -37,7 +37,7 @@ const inserirDadosTeste = async () => {
   
   try {
     // Verificar se já existem dados
-    const { count, error: erroVerificacao } = await supabase
+    const { count, error: erroVerificacao } = await (supabase as any)
       .from('operacoes_extras')
       .select('*', { count: 'exact', head: true });
     
@@ -46,13 +46,13 @@ const inserirDadosTeste = async () => {
       return;
     }
     
-      // Se não existem dados, inserir dados de teste
+    // Se não existem dados, inserir dados de teste
     if (count === 0) {
       console.log('Tabela vazia, inserindo dados de teste...');
       
       // Inserir um por um para garantir
       for (const dado of DADOS_TESTE) {
-        const { error: erroInsercao } = await supabase
+        const { error: erroInsercao } = await (supabase as any)
           .from('operacoes_extras')
           .insert([{
             departamento: dado.departamento,
@@ -76,19 +76,6 @@ const inserirDadosTeste = async () => {
   }
 };
 
-type RawOPEX = {
-  id: string;
-  departamento: string;
-  descricao: string;
-  data_inicio: string;
-  data_prevista_termino: string;
-  status: OPEX["status"];
-  concluido?: boolean | null;
-  data_conclusao?: string | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-};
-
 // Buscar todos os OPEX
 export const useOPEX = () => {
   return useQuery({
@@ -97,27 +84,9 @@ export const useOPEX = () => {
       try {
         console.log('🔍 Iniciando busca de OPEX via RPC...');
         
-        // Usar tabela operacoes_extras (ou RPC se existir)
-        const { data: dataDirect, error: errDirect } = await supabase
-          .from('operacoes_extras')
-          .select('*')
-          .order('data_prevista_termino', { ascending: true });
-        if (!errDirect && dataDirect?.length !== undefined) {
-          const rawData = (dataDirect || []) as RawOPEX[];
-          return rawData.map((item) => ({
-            id: item.id,
-            departamento: item.departamento,
-            descricao: item.descricao,
-            data_inicio: item.data_inicio,
-            data_prevista_termino: item.data_prevista_termino,
-            status: item.status,
-            concluido: item.concluido ?? false,
-            data_conclusao: item.data_conclusao ?? null,
-            created_at: item.created_at ?? new Date().toISOString(),
-            updated_at: item.updated_at ?? new Date().toISOString(),
-          })) as OPEX[];
-        }
-        const { data, error } = await supabase.rpc('get_operacoes_extras');
+        // Usar RPC function
+        const { data, error } = await supabase
+          .rpc('get_opex_atividades');
         
         console.log('📊 Resposta RPC:', { data_count: data?.length, error: error?.message });
         
@@ -133,21 +102,19 @@ export const useOPEX = () => {
         }
         
         console.log('✅ SUCCESS: Obtidos', data.length, 'registros da RPC');
-
-        const rawData = (data || []) as RawOPEX[];
-
-        return rawData.map((item) => ({
+        
+        return (data || []).map((item: any) => ({
           id: item.id,
           departamento: item.departamento,
           descricao: item.descricao,
           data_inicio: item.data_inicio,
           data_prevista_termino: item.data_prevista_termino,
           status: item.status,
-          concluido: item.concluido ?? false,
-          data_conclusao: item.data_conclusao ?? null,
-          created_at: item.created_at ?? new Date().toISOString(),
-          updated_at: item.updated_at ?? new Date().toISOString(),
-        })) as OPEX[];
+          concluido: item.concluido || false,
+          data_conclusao: item.data_conclusao || null,
+          created_at: item.created_at || new Date().toISOString(),
+          updated_at: item.updated_at || new Date().toISOString(),
+        } as OPEX));
       } catch (err) {
         console.error('❌ EXCEÇÃO ao buscar OPEX:', err);
         console.log('⚠️ Caindo para DADOS_TESTE');
@@ -165,16 +132,14 @@ export const useCreateOPEX = () => {
   return useMutation({
     mutationFn: async (opex: Omit<OPEX, 'id' | 'created_at' | 'updated_at'>) => {
       try {
-        const { data, error } = await supabase
-          .from('operacoes_extras')
+        const { data, error } = await (supabase as any)
+          .from('opex_atividades')
           .insert([{
             departamento: opex.departamento,
             descricao: opex.descricao,
             data_inicio: opex.data_inicio,
             data_prevista_termino: opex.data_prevista_termino,
             status: opex.status || 'pendente',
-            concluido: opex.concluido ?? false,
-            data_conclusao: opex.data_conclusao ?? null,
           }])
           .select()
           .single();
@@ -184,14 +149,9 @@ export const useCreateOPEX = () => {
           throw error;
         }
         return data;
-      } catch (err: unknown) {
+      } catch (err: any) {
         // Se der erro de tabela não encontrada, retornar dado fictício
-        const message =
-          typeof err === 'object' && err && 'message' in err
-            ? String((err as { message?: unknown }).message ?? '')
-            : '';
-
-        if (message.includes('Could not find the table')) {
+        if (err?.message?.includes('Could not find the table')) {
           console.warn('Tabela não encontrada, criando localmente');
           return {
             id: crypto.randomUUID(),
@@ -224,30 +184,17 @@ export const useUpdateOPEX = () => {
   return useMutation({
     mutationFn: async ({ id, ...opex }: OPEX) => {
       try {
-        const { data, error } = await supabase
-          .from('operacoes_extras')
-          .update({
-            departamento: opex.departamento,
-            descricao: opex.descricao,
-            data_inicio: opex.data_inicio,
-            data_prevista_termino: opex.data_prevista_termino,
-            status: opex.status,
-            concluido: opex.concluido,
-            data_conclusao: opex.data_conclusao,
-          })
+        const { data, error } = await (supabase as any)
+          .from('opex_atividades')
+          .update(opex)
           .eq('id', id)
           .select()
           .single();
 
         if (error) throw error;
         return data;
-      } catch (err: unknown) {
-        const message =
-          typeof err === 'object' && err && 'message' in err
-            ? String((err as { message?: unknown }).message ?? '')
-            : '';
-
-        if (message.includes('Could not find the table')) {
+      } catch (err: any) {
+        if (err?.message?.includes('Could not find the table')) {
           return { id, ...opex };
         }
         throw err;
@@ -270,19 +217,13 @@ export const useDeleteOPEX = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       try {
-        const { error } = await supabase
-          .from('operacoes_extras')
-          .delete()
+        const { error } = await (supabase as any)
+        .from('opex_atividades')
           .eq('id', id);
 
         if (error) throw error;
-      } catch (err: unknown) {
-        const message =
-          typeof err === 'object' && err && 'message' in err
-            ? String((err as { message?: unknown }).message ?? '')
-            : '';
-
-        if (message.includes('Could not find the table')) {
+      } catch (err: any) {
+        if (err?.message?.includes('Could not find the table')) {
           return;
         }
         throw err;

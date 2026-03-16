@@ -26,10 +26,22 @@ const OEEChart = () => {
       if (!acc[date]) {
         acc[date] = { oee: [], disponibilidade: [], performance: [], qualidade: [] };
       }
-      acc[date].oee.push(Number(registro.oee));
-      acc[date].disponibilidade.push(Number(registro.disponibilidade));
-      acc[date].performance.push(Number(registro.performance));
-      acc[date].qualidade.push(Number(registro.qualidade));
+
+      // Performance deve ser calculada como meta (kg) vs produzido
+      const metaKg = (registro.equipamentos && registro.equipamentos.capacidade_hora) || registro.capacidade_hora || 0;
+      const performance = metaKg > 0 ? Math.min(100, (registro.total_produzido / metaKg) * 100) : 0;
+
+      // Disponibilidade já está armazenada no registro (tempo_real / tempo_planejado)
+      // Qualidade também (unidades boas / total produzido)
+      // OEE é um produto desses valores
+      const disponibilidade = Number(registro.disponibilidade);
+      const qualidade = Number(registro.qualidade);
+      const oee = ((disponibilidade / 100) * (performance / 100) * (qualidade / 100)) * 100;
+
+      acc[date].oee.push(oee);
+      acc[date].disponibilidade.push(disponibilidade);
+      acc[date].performance.push(performance);
+      acc[date].qualidade.push(qualidade);
       return acc;
     }, {} as Record<string, { oee: number[]; disponibilidade: number[]; performance: number[]; qualidade: number[] }>);
 

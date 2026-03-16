@@ -20,7 +20,6 @@ const navItems = [
   { href: '/equipamentos', label: 'Segmentos' },
   { href: '/paradas', label: 'Paradas' },
   { href: '/qualidade', label: 'Qualidade' },
-  { href: '/opex', label: 'OPEX' },
   // Motivos tab removed per user request; revert to free-text input
 ];
 

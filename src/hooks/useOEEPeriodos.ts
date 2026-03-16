@@ -31,6 +31,7 @@ interface RegistroProducao {
   equipamento_id: string;
   tempo_real: number;
   tempo_ciclo_ideal: number;
+  capacidade_hora?: number;
   total_produzido: number;
   defeitos: number;
   equipamentos?: { id: string; nome: string } | null;
@@ -79,12 +80,10 @@ const calculateOEE = (registros: RegistroProducao[], paradas: Parada[]): OEEResu
     // Disponibilidade
     const disp = (tempoRealAjustado / TEMPO_TURNO) * 100;
 
-    // Performance
-    const unidadesIdeais = r.tempo_ciclo_ideal > 0
-      ? (tempoReal / r.tempo_ciclo_ideal) * 60
-      : 0;
+    // Performance (meta em kg vs produzido)
+    const metaKg = (r as any).capacidade_hora || 0;
     const unidadesReais = r.total_produzido || 0;
-    const perf = unidadesIdeais > 0 ? (unidadesReais / unidadesIdeais) * 100 : 0;
+    const perf = metaKg > 0 ? Math.min(100, (unidadesReais / metaKg) * 100) : 0;
 
     // Qualidade
     const unidadesBoas = Math.max(0, unidadesReais - (r.defeitos || 0));
