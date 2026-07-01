@@ -1,0 +1,276 @@
+import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { format } from 'date-fns';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useCreateRegistroProducao, RegistroProducaoInput } from '@/hooks/useRegistrosProducao';
+import { useEquipamentos } from '@/hooks/useEquipamentos';
+import { useTurnos } from '@/hooks/useTurnos';
+import { calcularTempoPlanejadoTurnoMinutos } from '@/lib/dateUtils';
+import { Plus } from 'lucide-react';
+
+const registroSchema = z.object({
+  data: z.string().min(1, 'Data é obrigatória'),
+  equipamento_id: z.string().min(1, 'Segmento é obrigatório'),
+  turno_id: z.string().min(1, 'Turno é obrigatório'),
+  tempo_planejado: z.number().min(1, 'Tempo planejado deve ser maior que 0'),
+  tempo_real: z.number().min(0, 'Tempo real não pode ser negativo'),
+  capacidade_hora: z.number().min(1, 'Meta em kg deve ser maior que 0'),
+  total_produzido: z.number().min(0, 'Total produzido não pode ser negativo'),
+  defeitos: z.number().min(0, 'Defeitos não pode ser negativo'),
+  observacoes: z.string().optional(),
+});
+
+type RegistroFormData = z.infer<typeof registroSchema>;
+
+const RegistroProducaoForm = () => {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return null;  // apenas admins podem criar registros
+
+  const [open, setOpen] = useState(false);
+  const createMutation = useCreateRegistroProducao();
+  const { data: equipamentos } = useEquipamentos();
+  const { data: turnos } = useTurnos();
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<RegistroFormData>({
+    resolver: zodResolver(registroSchema),
+      defaultValues: {
+      data: format(new Date(), 'yyyy-MM-dd'),
+      equipamento_id: '',
+      turno_id: '',
+      tempo_planejado: 440,
+      tempo_real: 440,
+      capacidade_hora: 100,
+      total_produzido: 0,
+      defeitos: 0,
+      observacoes: '',
+    },
+  });
+
+  const selectedEquipamentoId = watch('equipamento_id');
+  const totalProduzido = watch('total_produzido');
+  const defeitos = watch('defeitos');
+
+  // Auto-calculate defeitos when total changes
+  const handleTotalChange = (value: number) => {
+    setValue('total_produzido', value);
+    if (defeitos > value) {
+      setValue('defeitos', 0);
+    }
+  };
+
+  // Validate defeitos don't exceed total
+  const handleDefeitosChange = (value: number) => {
+    if (value > totalProduzido) {
+      setValue('defeitos', totalProduzido);
+    } else {
+      setValue('defeitos', value);
+    }
+  };
+
+  const handleEquipamentoChange = (id: string) => {
+    setValue('equipamento_id', id);
+  };
+
+  const handleTurnoChange = (id: string) => {
+    setValue('turno_id', id);
+    const turno = turnos?.find(t => t.id === id);
+    if (turno) {
+      const duracao = calcularTempoPlanejadoTurnoMinutos(turno.hora_inicio, turno.hora_fim);
+      setValue('tempo_planejado', duracao);
+      setValue('tempo_real', duracao);
+    }
+  };
+
+  const onSubmit = async (data: RegistroFormData) => {
+    try {
+      // Log para debug: verifica exatamente qual data está sendo enviada
+      console.log('Form data antes de enviar:', data);
+      console.log('Data value:', data.data, 'Type:', typeof data.data);
+      
+      // A data já vem como string do input type="date" (formato: YYYY-MM-DD)
+      // Não fazemos conversão, apenas passamos direto
+      await createMutation.mutateAsync(data as RegistroProducaoInput);
+      setOpen(false);
+      reset();
+    } catch (error) {
+      console.error('Error saving registro:', error);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="gradient-primary text-primary-foreground">
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Registro
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="font-display">Novo Registro de Produção</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="data">Data *</Label>
+              <Input id="data" type="date" {...register('data')} />
+              {errors.data && (
+                <p className="text-sm text-destructive">{errors.data.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="turno">Turno *</Label>
+              <Select
+                value={watch('turno_id')}
+                onValueChange={handleTurnoChange}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o turno" />
+                </SelectTrigger>
+                <SelectContent>
+                  {turnos?.map((turno) => (
+                    <SelectItem key={turno.id} value={turno.id}>
+                      {turno.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.turno_id && (
+                <p className="text-sm text-destructive">{errors.turno_id.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="equipamento">Segmento *</Label>
+            <Select
+              value={selectedEquipamentoId}
+              onValueChange={handleEquipamentoChange}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o segmento" />
+              </SelectTrigger>
+              <SelectContent>
+                {equipamentos?.filter(e => e.status === 'ativo').map((equip) => (
+                  <SelectItem key={equip.id} value={equip.id}>
+                    {equip.nome} {equip.codigo && `(${equip.codigo})`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.equipamento_id && (
+              <p className="text-sm text-destructive">{errors.equipamento_id.message}</p>
+            )}
+          </div>
+
+          <div className="border-t border-border pt-4">
+            <h4 className="font-medium text-sm text-muted-foreground mb-3">Tempos</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="tempo_planejado">Tempo Planejado (min)</Label>
+                <Input
+                  id="tempo_planejado"
+                  type="number"
+                  {...register('tempo_planejado', { valueAsNumber: true })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tempo_real">Tempo Real (min)</Label>
+                <Input
+                  id="tempo_real"
+                  type="number"
+                  {...register('tempo_real', { valueAsNumber: true })}
+                />
+              </div>
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="capacidade_hora">Meta (kg)</Label>
+                <Input
+                  id="capacidade_hora"
+                  type="number"
+                  {...register('capacidade_hora', { valueAsNumber: true })}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-border pt-4">
+            <h4 className="font-medium text-sm text-muted-foreground mb-3">Produção</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="total_produzido">Total Produzido</Label>
+                <Input
+                  id="total_produzido"
+                  type="number"
+                  value={totalProduzido}
+                  onChange={(e) => handleTotalChange(Number(e.target.value))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="defeitos">Defeitos</Label>
+                <Input
+                  id="defeitos"
+                  type="number"
+                  value={defeitos}
+                  onChange={(e) => handleDefeitosChange(Number(e.target.value))}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="observacoes">Observações</Label>
+            <Textarea
+              id="observacoes"
+              {...register('observacoes')}
+              placeholder="Observações sobre a produção..."
+              rows={3}
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              className="gradient-primary text-primary-foreground"
+              disabled={createMutation.isPending}
+            >
+              {createMutation.isPending ? 'Salvando...' : 'Salvar Registro'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default RegistroProducaoForm;
