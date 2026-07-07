@@ -43,12 +43,24 @@ import { exportQualidadeReport } from '@/lib/pdfExport';
 import { ShieldAlert, Trash2, Filter, X, Loader2, Package, AlertTriangle, RefreshCw, TrendingDown, Gauge, FileDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
+import { getRangeDoMes } from '@/lib/dateUtils';
 
 const Qualidade = () => {
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [turnoId, setTurnoId] = useState('');
-  
+  const [mesFiltro, setMesFiltro] = useState('');
+
+  // Preenche Data Início/Fim com o mês inteiro selecionado; os cards, o Pareto e o PDF
+  // já usam "dataInicio"/"dataFim" para tudo, então passam a refletir o mês automaticamente.
+  const handleMesChange = (mes: string) => {
+    setMesFiltro(mes);
+    if (!mes) return;
+    const { inicio, fim } = getRangeDoMes(mes);
+    setDataInicio(inicio);
+    setDataFim(fim);
+  };
+
   const { data: produtos, isLoading } = useProdutosBloqueados({
     dataInicio: dataInicio || undefined,
     dataFim: dataFim || undefined,
@@ -83,6 +95,7 @@ const Qualidade = () => {
   }, [produtos]);
 
   const clearFilters = () => {
+    setMesFiltro('');
     setDataInicio('');
     setDataFim('');
     setTurnoId('');
@@ -264,11 +277,20 @@ const Qualidade = () => {
           <CardContent>
             <div className="flex flex-wrap gap-4 items-end">
               <div className="space-y-2">
+                <Label>Mês</Label>
+                <Input
+                  type="month"
+                  value={mesFiltro}
+                  onChange={(e) => handleMesChange(e.target.value)}
+                  className="w-40"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label>Data Início</Label>
                 <Input
                   type="date"
                   value={dataInicio}
-                  onChange={(e) => setDataInicio(e.target.value)}
+                  onChange={(e) => { setMesFiltro(''); setDataInicio(e.target.value); }}
                   className="w-40"
                 />
               </div>
@@ -277,7 +299,7 @@ const Qualidade = () => {
                 <Input
                   type="date"
                   value={dataFim}
-                  onChange={(e) => setDataFim(e.target.value)}
+                  onChange={(e) => { setMesFiltro(''); setDataFim(e.target.value); }}
                   className="w-40"
                 />
               </div>

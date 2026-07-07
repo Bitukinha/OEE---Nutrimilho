@@ -10,16 +10,19 @@ import { TrendingUp, Loader2 } from 'lucide-react';
 interface TendenciaQualidadeProps {
   dataInicio?: string;
   dataFim?: string;
+  turnoId?: string;
 }
 
-const TendenciaQualidade = ({ dataInicio, dataFim }: TendenciaQualidadeProps) => {
+const TendenciaQualidade = ({ dataInicio, dataFim, turnoId }: TendenciaQualidadeProps) => {
   const { data: registros, isLoading: loadingRegistros } = useRegistrosProducao({
     dataInicio,
     dataFim,
+    turnoId,
   });
   const { data: bloqueados, isLoading: loadingBloqueados } = useProdutosBloqueados({
     dataInicio,
     dataFim,
+    turnoId,
   });
 
   const chartData = useMemo(() => {

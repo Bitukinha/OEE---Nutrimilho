@@ -40,6 +40,7 @@ import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { getOEEColor, getOEELevel } from '@/types/oee';
 import { useTurnos } from '@/hooks/useTurnos';
+import { getRangeDoMes } from '@/lib/dateUtils';
 
 const Producao = () => {
   const [filters, setFilters] = useState<{
@@ -48,11 +49,21 @@ const Producao = () => {
     equipamentoId?: string;
     turnoId?: string;
   }>({});
-  
+  const [mesFiltro, setMesFiltro] = useState('');
+
   const { data: registros, isLoading } = useRegistrosProducao(filters);
   const { data: equipamentos } = useEquipamentos();
   const { data: turnos } = useTurnos();
   const deleteMutation = useDeleteRegistroProducao();
+
+  // Preenche Data Início/Fim com o mês inteiro selecionado; o dashboard e o PDF
+  // já usam "filters" para tudo, então passam a refletir o mês automaticamente.
+  const handleMesChange = (mes: string) => {
+    setMesFiltro(mes);
+    if (!mes) return;
+    const { inicio, fim } = getRangeDoMes(mes);
+    setFilters(f => ({ ...f, dataInicio: inicio, dataFim: fim }));
+  };
 
   const levelLabels = {
     excellent: 'Excelente',
@@ -75,6 +86,7 @@ const Producao = () => {
 
   const clearFilters = () => {
     setFilters({});
+    setMesFiltro('');
   };
 
   return (
@@ -115,12 +127,22 @@ const Producao = () => {
           <CardContent>
             <div className="flex flex-wrap gap-4 items-end">
               <div className="space-y-2">
+                <Label htmlFor="mes">Mês</Label>
+                <Input
+                  id="mes"
+                  type="month"
+                  value={mesFiltro}
+                  onChange={(e) => handleMesChange(e.target.value)}
+                  className="w-40"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="dataInicio">Data Início</Label>
                 <Input
                   id="dataInicio"
                   type="date"
                   value={filters.dataInicio || ''}
-                  onChange={(e) => setFilters(f => ({ ...f, dataInicio: e.target.value }))}
+                  onChange={(e) => { setMesFiltro(''); setFilters(f => ({ ...f, dataInicio: e.target.value })); }}
                   className="w-40"
                 />
               </div>
@@ -130,7 +152,7 @@ const Producao = () => {
                   id="dataFim"
                   type="date"
                   value={filters.dataFim || ''}
-                  onChange={(e) => setFilters(f => ({ ...f, dataFim: e.target.value }))}
+                  onChange={(e) => { setMesFiltro(''); setFilters(f => ({ ...f, dataFim: e.target.value })); }}
                   className="w-40"
                 />
               </div>

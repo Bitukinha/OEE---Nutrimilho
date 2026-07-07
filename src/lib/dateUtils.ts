@@ -50,6 +50,21 @@ export function calcularTempoPlanejadoTurnoMinutos(horaInicio: string, horaFim: 
   return Math.min(Math.max(0, duracao), TEMPO_PLANEJADO_TURNO_MINUTOS);
 }
 
+/**
+ * Dado um mês no formato "YYYY-MM" (valor de um <input type="month">), retorna o
+ * intervalo de datas ISO daquele mês inteiro. Se o mês ainda não terminou (mês atual),
+ * o fim do intervalo é limitado a hoje em vez do último dia do mês.
+ */
+export function getRangeDoMes(mesStr: string): { inicio: string; fim: string } {
+  const [ano, mes] = mesStr.split('-').map(Number);
+  const inicio = new Date(ano, mes - 1, 1);
+  const ultimoDiaDoMes = new Date(ano, mes, 0);
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const fim = ultimoDiaDoMes > hoje ? hoje : ultimoDiaDoMes;
+  return { inicio: formatDateISO(inicio), fim: formatDateISO(fim) };
+}
+
 /** Calcula disponibilidade considerando que as paradas não podem ultrapassar o tempo planejado */
 export function calcularDisponibilidadeComParadas(tempoPlanejadoMinutos: number, paradasMinutos: number): number {
   const planejado = Math.max(0, tempoPlanejadoMinutos);

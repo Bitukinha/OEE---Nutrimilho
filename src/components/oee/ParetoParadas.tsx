@@ -21,8 +21,14 @@ interface ParetoData {
   acumulado: number;
 }
 
-const ParetoParadas = () => {
-  const { data: paradas, isLoading } = useParadas();
+interface ParetoParadasProps {
+  dataInicio?: string;
+  dataFim?: string;
+  turnoId?: string;
+}
+
+const ParetoParadas = ({ dataInicio, dataFim, turnoId }: ParetoParadasProps = {}) => {
+  const { data: paradas, isLoading } = useParadas({ dataInicio, dataFim, turnoId });
 
   const paretoData = useMemo(() => {
     if (!paradas || paradas.length === 0) return [];

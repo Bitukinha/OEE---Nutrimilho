@@ -34,6 +34,7 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useTurnos } from '@/hooks/useTurnos';
+import { getRangeDoMes } from '@/lib/dateUtils';
 import {
   Select,
   SelectContent,
@@ -53,10 +54,21 @@ const Paradas = () => {
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [turnoId, setTurnoId] = useState('');
+  const [mesFiltro, setMesFiltro] = useState('');
 
   const { data: paradas, isLoading } = useParadas({ dataInicio, dataFim, turnoId });
   const deleteMutation = useDeleteParada();
   const { data: turnos } = useTurnos();
+
+  // Preenche Data Início/Fim com o mês inteiro selecionado; os cards, gráficos e o PDF
+  // já usam "dataInicio"/"dataFim" para tudo, então passam a refletir o mês automaticamente.
+  const handleMesChange = (mes: string) => {
+    setMesFiltro(mes);
+    if (!mes) return;
+    const { inicio, fim } = getRangeDoMes(mes);
+    setDataInicio(inicio);
+    setDataFim(fim);
+  };
 
   const totalMinutos = paradas?.reduce((acc, p) => acc + p.duracao, 0) || 0;
   const totalParadas = paradas?.length || 0;
@@ -132,12 +144,21 @@ const Paradas = () => {
           <CardContent className="pt-6">
             <div className="flex gap-4">
               <div className="flex-1">
+                <Label htmlFor="mes">Mês</Label>
+                <Input
+                  id="mes"
+                  type="month"
+                  value={mesFiltro}
+                  onChange={(e) => handleMesChange(e.target.value)}
+                />
+              </div>
+              <div className="flex-1">
                 <Label htmlFor="dataInicio">Data Início</Label>
                 <Input
                   id="dataInicio"
                   type="date"
                   value={dataInicio}
-                  onChange={(e) => setDataInicio(e.target.value)}
+                  onChange={(e) => { setMesFiltro(''); setDataInicio(e.target.value); }}
                 />
               </div>
               <div className="flex-1">
@@ -146,7 +167,7 @@ const Paradas = () => {
                   id="dataFim"
                   type="date"
                   value={dataFim}
-                  onChange={(e) => setDataFim(e.target.value)}
+                  onChange={(e) => { setMesFiltro(''); setDataFim(e.target.value); }}
                 />
               </div>
               <div className="flex-1">
@@ -169,12 +190,11 @@ const Paradas = () => {
                 </Select>
               </div>
               <div className="flex items-end">
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => {
+                    setMesFiltro('');
                     setDataInicio('');
-                    setDataFim('');
-                    setTurnoId('');
                     setDataFim('');
                     setTurnoId('');
                   }}
@@ -188,7 +208,7 @@ const Paradas = () => {
 
         {/* Charts */}
         <div className="grid grid-cols-1 gap-6 mb-6">
-          <ParetoParadas />
+          <ParetoParadas dataInicio={dataInicio} dataFim={dataFim} turnoId={turnoId} />
           <TendenciaParadas dataInicio={dataInicio} dataFim={dataFim} turnoId={turnoId} />
         </div>
 
