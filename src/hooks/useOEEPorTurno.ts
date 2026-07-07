@@ -162,9 +162,9 @@ export const useOEEPorTurno = (dataInicio?: string, dataFim?: string) => {
             ? Math.min(100, (registro.total_produzido / metaKg) * 100)
             : (registro.total_produzido > 0 ? 100 : 0);
           
-          // Qualidade = (Total - Defeitos - Bloqueados) / Total Produzido
-          const unidadesBoas = Math.max(0, registro.total_produzido - registro.defeitos - bloqueadosProporcional);
-          const qualidade = registro.total_produzido > 0 
+          // Qualidade = (Total - Bloqueados) / Total Produzido — só bloqueios afetam a qualidade/OEE
+          const unidadesBoas = Math.max(0, registro.total_produzido - bloqueadosProporcional);
+          const qualidade = registro.total_produzido > 0
             ? (unidadesBoas / registro.total_produzido) * 100 
             : 0;
 

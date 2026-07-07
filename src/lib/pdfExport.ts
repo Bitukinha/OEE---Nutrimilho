@@ -19,26 +19,16 @@ export const exportOEEReport = async (
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   
-  // Calculate metrics from the registros being displayed (not from separate hook)
+  // Usa os valores já calculados por useRegistrosProducao (fonte única de verdade,
+  // já considera produtos bloqueados na qualidade) em vez de recalcular com uma fórmula divergente.
   let calculatedMetrics = { disponibilidade: 0, performance: 0, qualidade: 0, oee: 0 };
   if (registros && registros.length > 0) {
     const sums = registros.reduce(
       (acc, r) => {
-        const paradas = r.paradas ?? [];
-        const paradasSum = paradas.reduce((a, p) => a + (p.duracao || 0), 0);
-        const disponibilidade =
-          r.tempo_planejado > 0 ? Math.max(0, ((r.tempo_planejado - paradasSum) / r.tempo_planejado) * 100) : 0;
-        const metaKg = (r.equipamentos && r.equipamentos.capacidade_hora) || r.capacidade_hora || 0;
-        const performance = metaKg > 0 ? Math.min(100, (r.total_produzido / metaKg) * 100) : 0;
-        const unidadesBoas = Math.max(0, r.total_produzido - (r.defeitos || 0));
-        const qualidade =
-          r.total_produzido > 0 ? Math.max(0, (unidadesBoas / r.total_produzido) * 100) : 0;
-        const oee = ((disponibilidade / 100) * (performance / 100) * (qualidade / 100)) * 100;
-
-        acc.disponibilidade += disponibilidade;
-        acc.performance += performance;
-        acc.qualidade += qualidade;
-        acc.oee += oee;
+        acc.disponibilidade += Number(r.disponibilidade) || 0;
+        acc.performance += Number(r.performance) || 0;
+        acc.qualidade += Number(r.qualidade) || 0;
+        acc.oee += Number(r.oee) || 0;
         return acc;
       },
       { disponibilidade: 0, performance: 0, qualidade: 0, oee: 0 },
@@ -131,11 +121,10 @@ export const exportOEEReport = async (
   doc.text('Registros de Produção', 14, 115);
   
   const tableData = registros.map((r) => {
-    const metaKg = (r.equipamentos && r.equipamentos.capacidade_hora) || r.capacidade_hora || 0;
-    const performance = metaKg > 0 ? Math.min(100, (r.total_produzido / metaKg) * 100) : 0;
-    const disponibilidade = Number(r.disponibilidade);
-    const qualidade = Number(r.qualidade);
-    const oee = ((disponibilidade / 100) * (performance / 100) * (qualidade / 100)) * 100;
+    const disponibilidade = Number(r.disponibilidade) || 0;
+    const performance = Number(r.performance) || 0;
+    const qualidade = Number(r.qualidade) || 0;
+    const oee = Number(r.oee) || 0;
 
     return [
       r.data ? format(parseISO(r.data), 'dd/MM/yyyy') : '-',

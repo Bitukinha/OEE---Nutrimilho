@@ -143,9 +143,9 @@ export const useOEEPorSegmento = (dataInicio?: string, dataFim?: string) => {
               const unidadesReais = r.total_produzido || 0;
               const perf = unidadesIdeais > 0 ? (unidadesReais / unidadesIdeais) * 100 : 0;
 
-              // Qualidade
+              // Qualidade só é afetada por produtos bloqueados (não por defeitos manuais)
               const bloqProp = regs.length > 0 ? (bloqueadosPorEquipamento[equipId] || 0) / regs.length : 0;
-              const unidadesBoas = Math.max(0, unidadesReais - (r.defeitos || 0) - bloqProp);
+              const unidadesBoas = Math.max(0, unidadesReais - bloqProp);
               const qual = unidadesReais > 0 ? (unidadesBoas / unidadesReais) * 100 : 0;
 
               totalDisp += disp;

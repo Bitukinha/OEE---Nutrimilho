@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, startOfWeek, startOfMonth, startOfYear } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Header from '@/components/oee/Header';
 import MetricCard from '@/components/oee/MetricCard';
@@ -58,10 +58,25 @@ const Index = () => {
     { value: '365', label: 'Anual' },
   ];
   const diasPeriodo = Number(selectedPeriod);
+
+  // "Visão por período" mostra o período de calendário atual (semana/mês/ano corrente),
+  // não uma janela rolante de N dias — ex: em julho, "Mensal" mostra julho inteiro até hoje.
+  const periodoRange = useMemo(() => {
+    const hoje = new Date();
+    const fim = format(hoje, 'yyyy-MM-dd');
+    const inicio =
+      selectedPeriod === '7'
+        ? startOfWeek(hoje, { weekStartsOn: 1 })
+        : selectedPeriod === '30'
+        ? startOfMonth(hoje)
+        : startOfYear(hoje);
+    return { inicio: format(inicio, 'yyyy-MM-dd'), fim };
+  }, [selectedPeriod]);
+
   const { data: oeeData, isLoading: oeeLoading } = useOEEPorTurno(dataFiltro, dataFiltro);
   const { data: equipamentos, isLoading: equipamentosLoading } = useEquipamentos();
   const { data: registros, isLoading: registrosLoading } = useRegistrosProducao();
-  const { data: historicoData, isLoading: historicoLoading } = useOEEHistorico(diasPeriodo);
+  const { data: historicoData, isLoading: historicoLoading } = useOEEHistorico(diasPeriodo, periodoRange);
 
   const isLoading = oeeLoading || equipamentosLoading || registrosLoading || historicoLoading;
 

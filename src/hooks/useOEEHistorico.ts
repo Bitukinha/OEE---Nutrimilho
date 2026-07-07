@@ -26,12 +26,17 @@ export interface OEEHistoricoData {
   piorTurno: { nome: string; oee: number } | null;
 }
 
-export const useOEEHistorico = (dias: number = 30) => {
+export interface OEEHistoricoRange {
+  inicio: string;
+  fim: string;
+}
+
+export const useOEEHistorico = (dias: number = 30, range?: OEEHistoricoRange) => {
   return useQuery({
-    queryKey: ['oee_historico', dias],
+    queryKey: ['oee_historico', dias, range?.inicio, range?.fim],
     queryFn: async (): Promise<OEEHistoricoData> => {
-      const dataFim = format(new Date(), 'yyyy-MM-dd'); // Today
-      const dataInicio = format(subDays(new Date(), dias), 'yyyy-MM-dd');
+      const dataFim = range?.fim ?? format(new Date(), 'yyyy-MM-dd'); // Today (ou fim do período informado)
+      const dataInicio = range?.inicio ?? format(subDays(new Date(), dias), 'yyyy-MM-dd');
 
       // Buscar turnos
       const { data: turnos, error: turnosError } = await supabase
@@ -114,7 +119,8 @@ export const useOEEHistorico = (dias: number = 30) => {
           const disp = calcularDisponibilidadeComParadas(tempoPlanejado, paradasProp);
           const metaKg = r.capacidade_hora || 0;
           const perf = metaKg > 0 ? Math.min((r.total_produzido / metaKg) * 100, 100) : (r.total_produzido > 0 ? 100 : 0);
-          const unidadesBoas = Math.max(0, r.total_produzido - r.defeitos - bloqProp);
+          // Qualidade só é afetada por produtos bloqueados (não por meta não atingida)
+          const unidadesBoas = Math.max(0, r.total_produzido - bloqProp);
           const qual = r.total_produzido > 0 ? Math.max(0, (unidadesBoas / r.total_produzido) * 100) : 0;
 
           totalDisp += disp;
@@ -161,7 +167,8 @@ export const useOEEHistorico = (dias: number = 30) => {
             const disp = calcularDisponibilidadeComParadas(tempoPlanejado, paradasProp);
             const metaKg = r.capacidade_hora || 0;
             const perf = metaKg > 0 ? Math.min((r.total_produzido / metaKg) * 100, 100) : (r.total_produzido > 0 ? 100 : 0);
-            const unidadesBoas = Math.max(0, r.total_produzido - r.defeitos - bloqProp);
+            // Qualidade só é afetada por produtos bloqueados (não por meta não atingida)
+            const unidadesBoas = Math.max(0, r.total_produzido - bloqProp);
             const qual = r.total_produzido > 0 ? Math.max(0, (unidadesBoas / r.total_produzido) * 100) : 0;
 
             totalDisp += disp;

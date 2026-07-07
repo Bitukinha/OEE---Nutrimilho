@@ -58,8 +58,8 @@ const TendenciaQualidade = ({ dataInicio, dataFim }: TendenciaQualidadeProps) =>
     // Converter para array e calcular qualidade
     return Array.from(porData.entries())
       .map(([data, valores]) => {
-        // Qualidade = (total - defeitos - bloqueados) / total * 100
-        const unidadesBonsFinal = Math.max(0, valores.totalProduzido - valores.defeitos - valores.bloqueados);
+        // Qualidade = (total - bloqueados) / total * 100 — só bloqueios afetam a qualidade
+        const unidadesBonsFinal = Math.max(0, valores.totalProduzido - valores.bloqueados);
         const qualidade = valores.totalProduzido > 0 
           ? (unidadesBonsFinal / valores.totalProduzido) * 100 
           : 100;

@@ -223,31 +223,14 @@ const Producao = () => {
                   </TableHeader>
                   <TableBody>
                     {registros.map((registro) => {
-                      // Compute metrics client-side using Meta (kg) as the performance driver
-                      const metaKg = registro.capacidade_hora || 0;
-                      const paradas = registro.paradas ?? [];
-                      const paradasSum = paradas.reduce((acc, p) => acc + (p.duracao || 0), 0);
-                      const disponibilidadeCalc = registro.tempo_planejado > 0
-                        ? Math.max(0, ((registro.tempo_planejado - paradasSum) / registro.tempo_planejado) * 100)
-                        : 0;
-
-                      // Performance based on productive time vs tempo_real: (tempo_real - paradas) / tempo_real
-                      // Performance remains based on produced / metaKg (cliente requested)
-                      const performanceCalc = metaKg > 0
-                        ? Math.min(100, (registro.total_produzido / metaKg) * 100)
-                        : (registro.tempo_ciclo_real > 0 ? Math.min(100, (registro.tempo_ciclo_ideal / registro.tempo_ciclo_real) * 100) : 0);
-
-                      const unidadesBoas = Math.max(0, (registro.total_produzido - (registro.defeitos || 0)));
-                      const qualidadeCalc = registro.total_produzido > 0
-                        ? Math.max(0, (unidadesBoas / registro.total_produzido) * 100)
-                        : 0;
-
-                      const oeeValue = Number(((disponibilidadeCalc * performanceCalc * qualidadeCalc) / 10000).toFixed(1));
+                      // Usa os valores já calculados por useRegistrosProducao (fonte única de verdade),
+                      // que já considera produtos bloqueados na qualidade.
+                      const oeeValue = registro.oee;
                       const level = getOEELevel(oeeValue);
 
-                      const disponibilidadeDisplay = Number(disponibilidadeCalc.toFixed(1));
-                      const performanceDisplay = Number(performanceCalc.toFixed(1));
-                      const qualidadeDisplay = Number(qualidadeCalc.toFixed(1));
+                      const disponibilidadeDisplay = registro.disponibilidade;
+                      const performanceDisplay = registro.performance;
+                      const qualidadeDisplay = registro.qualidade;
 
                       return (
                         <TableRow key={registro.id} className="hover:bg-muted/30">

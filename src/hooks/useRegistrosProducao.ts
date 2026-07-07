@@ -81,12 +81,45 @@ export const useRegistrosProducao = (filters?: { dataInicio?: string; dataFim?: 
       }
       
       const { data, error } = await query;
-      
+
       if (error) {
         console.error('Erro ao buscar registros de produção:', error);
         throw error;
       }
       console.log('Registros de produção carregados:', data?.length || 0);
+
+      // Buscar produtos bloqueados no mesmo período/turno: a qualidade só é afetada
+      // por produtos bloqueados, não pelo campo "defeitos" nem pela meta não atingida.
+      let bloqueadosQuery = supabase
+        .from('produtos_bloqueados')
+        .select('turno_id, quantidade');
+
+      if (filters?.dataInicio) {
+        bloqueadosQuery = bloqueadosQuery.gte('data', filters.dataInicio);
+      }
+      if (filters?.dataFim) {
+        bloqueadosQuery = bloqueadosQuery.lte('data', filters.dataFim);
+      }
+      if (filters?.turnoId) {
+        bloqueadosQuery = bloqueadosQuery.eq('turno_id', filters.turnoId);
+      }
+
+      const { data: bloqueados, error: bloqueadosError } = await bloqueadosQuery;
+      if (bloqueadosError) {
+        console.warn('Erro ao buscar produtos bloqueados:', bloqueadosError);
+      }
+
+      const bloqueadosPorTurno: Record<string, number> = {};
+      bloqueados?.forEach((b) => {
+        if (b.turno_id) {
+          bloqueadosPorTurno[b.turno_id] = (bloqueadosPorTurno[b.turno_id] || 0) + (b.quantidade || 0);
+        }
+      });
+
+      const registrosPorTurno: Record<string, number> = {};
+      (data || []).forEach((r: any) => {
+        registrosPorTurno[r.turno_id] = (registrosPorTurno[r.turno_id] || 0) + 1;
+      });
 
       const transformed = (data || []).map((r: any) => {
         const paradas = r.paradas ?? [];
@@ -103,7 +136,9 @@ export const useRegistrosProducao = (filters?: { dataInicio?: string; dataFim?: 
           ? Math.min(100, (r.total_produzido / metaKg) * 100)
           : 0;
 
-        const unidadesBoas = Math.max(0, (r.total_produzido || 0) - (r.defeitos || 0));
+        const totalRegistrosTurno = registrosPorTurno[r.turno_id] || 1;
+        const bloqueadosProporcional = (bloqueadosPorTurno[r.turno_id] || 0) / totalRegistrosTurno;
+        const unidadesBoas = Math.max(0, (r.total_produzido || 0) - bloqueadosProporcional);
         const qualidade = r.total_produzido > 0
           ? Math.max(0, (unidadesBoas / r.total_produzido) * 100)
           : 0;

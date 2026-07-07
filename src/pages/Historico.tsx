@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, startOfMonth, startOfYear } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ArrowLeft, TrendingUp, TrendingDown, Minus, Trophy, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,9 +27,41 @@ const TendenciaIcon = ({ tendencia }: { tendencia: 'up' | 'down' | 'stable' }) =
   return <Minus className="h-5 w-5 text-muted-foreground" />;
 };
 
+type PeriodoOption = '7' | '15' | '30' | '60' | 'mes_atual' | 'ano_atual';
+
+const PERIODO_LABELS: Record<PeriodoOption, string> = {
+  '7': 'Últimos 7 dias',
+  '15': 'Últimos 15 dias',
+  '30': 'Últimos 30 dias',
+  '60': 'Últimos 60 dias',
+  mes_atual: 'Mês atual',
+  ano_atual: 'Ano atual',
+};
+
 const Historico = () => {
-  const [dias, setDias] = useState(30);
-  const { data, isLoading } = useOEEHistorico(dias);
+  const [periodo, setPeriodo] = useState<PeriodoOption>('30');
+
+  const { dias, range, descricaoPeriodo } = useMemo(() => {
+    const hoje = new Date();
+    if (periodo === 'mes_atual') {
+      return {
+        dias: 30,
+        range: { inicio: format(startOfMonth(hoje), 'yyyy-MM-dd'), fim: format(hoje, 'yyyy-MM-dd') },
+        descricaoPeriodo: 'no mês atual',
+      };
+    }
+    if (periodo === 'ano_atual') {
+      return {
+        dias: 365,
+        range: { inicio: format(startOfYear(hoje), 'yyyy-MM-dd'), fim: format(hoje, 'yyyy-MM-dd') },
+        descricaoPeriodo: 'no ano atual',
+      };
+    }
+    const diasSelecionados = Number(periodo);
+    return { dias: diasSelecionados, range: undefined, descricaoPeriodo: `nos últimos ${diasSelecionados} dias` };
+  }, [periodo]);
+
+  const { data, isLoading } = useOEEHistorico(dias, range);
 
   const formatDate = (dateStr: string) => {
     const [year, month, day] = dateStr.split('-');
@@ -50,15 +82,17 @@ const Historico = () => {
               </Link>
               <h1 className="text-2xl font-bold">Histórico OEE</h1>
             </div>
-            <Select value={dias.toString()} onValueChange={(v) => setDias(Number(v))}>
+            <Select value={periodo} onValueChange={(v) => setPeriodo(v as PeriodoOption)}>
               <SelectTrigger className="w-[180px] bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="7">Últimos 7 dias</SelectItem>
-                <SelectItem value="15">Últimos 15 dias</SelectItem>
-                <SelectItem value="30">Últimos 30 dias</SelectItem>
-                <SelectItem value="60">Últimos 60 dias</SelectItem>
+                <SelectItem value="7">{PERIODO_LABELS['7']}</SelectItem>
+                <SelectItem value="15">{PERIODO_LABELS['15']}</SelectItem>
+                <SelectItem value="30">{PERIODO_LABELS['30']}</SelectItem>
+                <SelectItem value="60">{PERIODO_LABELS['60']}</SelectItem>
+                <SelectItem value="mes_atual">{PERIODO_LABELS.mes_atual}</SelectItem>
+                <SelectItem value="ano_atual">{PERIODO_LABELS.ano_atual}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -92,7 +126,7 @@ const Historico = () => {
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Média dos últimos {dias} dias
+                      Média {descricaoPeriodo}
                     </p>
                   </CardContent>
                 </Card>
@@ -116,7 +150,7 @@ const Historico = () => {
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Média dos últimos {dias} dias
+                      Média {descricaoPeriodo}
                     </p>
                   </CardContent>
                 </Card>
