@@ -43,6 +43,11 @@ const statusConfig = {
   },
 };
 
+// Flags para ocultar temporariamente seções do Dashboard sem remover o código
+// (troque para true para reexibir).
+const MOSTRAR_ULTIMOS_REGISTROS = false;
+const MOSTRAR_OEE_POR_SEGMENTO = false;
+
 const Index = () => {
   // OEE sempre é do dia anterior (dados preenchidos no fim do dia)
   const yesterday = new Date();
@@ -351,13 +356,15 @@ const Index = () => {
             {/* Pareto e Status */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
               <ParetoParadas />
-              <ProductionTable />
+              {MOSTRAR_ULTIMOS_REGISTROS && <ProductionTable />}
             </div>
 
             {/* OEE por Segmento */}
-            <div className="mb-8">
-              <OEESegmentoChart dataInicio={dataFiltro} dataFim={dataFiltro} />
-            </div>
+            {MOSTRAR_OEE_POR_SEGMENTO && (
+              <div className="mb-8">
+                <OEESegmentoChart dataInicio={dataFiltro} dataFim={dataFiltro} />
+              </div>
+            )}
 
             {/* Equipment Status */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -411,7 +418,7 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              <ProductionTable />
+              {MOSTRAR_ULTIMOS_REGISTROS && <ProductionTable />}
             </div>
 
             {/* Footer */}
