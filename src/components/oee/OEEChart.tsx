@@ -27,16 +27,12 @@ const OEEChart = () => {
         acc[date] = { oee: [], disponibilidade: [], performance: [], qualidade: [] };
       }
 
-      // Performance deve ser calculada como meta (kg) vs produzido
-      const metaKg = (registro.equipamentos && registro.equipamentos.capacidade_hora) || registro.capacidade_hora || 0;
-      const performance = metaKg > 0 ? Math.min(100, (registro.total_produzido / metaKg) * 100) : 0;
-
-      // Disponibilidade já está armazenada no registro (tempo_real / tempo_planejado)
-      // Qualidade também (unidades boas / total produzido)
-      // OEE é um produto desses valores
+      // Usa os valores já calculados por useRegistrosProducao (fonte única de verdade)
+      // em vez de recalcular aqui com uma fórmula divergente.
       const disponibilidade = Number(registro.disponibilidade);
+      const performance = Number(registro.performance);
       const qualidade = Number(registro.qualidade);
-      const oee = ((disponibilidade / 100) * (performance / 100) * (qualidade / 100)) * 100;
+      const oee = Number(registro.oee);
 
       acc[date].oee.push(oee);
       acc[date].disponibilidade.push(disponibilidade);

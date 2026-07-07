@@ -131,7 +131,9 @@ export const useRegistrosProducao = (filters?: { dataInicio?: string; dataFim?: 
 
         const disponibilidade = calcularDisponibilidadeComParadas(tempoPlanejado, paradasSum);
 
-        const metaKg = (r.equipamentos && r.equipamentos.capacidade_hora) || r.capacidade_hora || 0;
+        // Meta em kg é a informada no próprio registro (capacidade_hora do equipamento é uma
+        // configuração diferente/maior do equipamento e não deve ser usada aqui).
+        const metaKg = r.capacidade_hora || 0;
         const performance = metaKg > 0
           ? Math.min(100, (r.total_produzido / metaKg) * 100)
           : 0;
