@@ -78,6 +78,13 @@ const Index = () => {
   const { data: registros, isLoading: registrosLoading } = useRegistrosProducao();
   const { data: historicoData, isLoading: historicoLoading } = useOEEHistorico(diasPeriodo, periodoRange);
 
+  const historicoTurnosOrdenados = useMemo(() => {
+    const ordem = ['Turno A', 'Turno B', 'Turno C'];
+    return [...(historicoData?.porTurno ?? [])].sort(
+      (a, b) => ordem.indexOf(a.turno_nome) - ordem.indexOf(b.turno_nome)
+    );
+  }, [historicoData?.porTurno]);
+
   const isLoading = oeeLoading || equipamentosLoading || registrosLoading || historicoLoading;
 
   // Use real data or fallback to defaults
@@ -218,7 +225,7 @@ const Index = () => {
                     </div>
                   ) : (
                     <div className="grid gap-6">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="rounded-xl border border-border bg-card p-4">
                           <h3 className="text-sm text-muted-foreground">OEE Médio</h3>
                           <p className="text-3xl font-bold text-foreground mt-3">
@@ -227,24 +234,36 @@ const Index = () => {
                               : '—'}
                           </p>
                         </div>
-                        <div className="rounded-xl border border-border bg-card p-4">
-                          <h3 className="text-sm text-muted-foreground">Melhor Turno</h3>
-                          <p className="text-3xl font-bold text-foreground mt-3">
-                            {historicoData?.melhorTurno?.nome ?? '—'}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {historicoData?.melhorTurno ? `${historicoData.melhorTurno.oee.toFixed(1)}%` : '—'}
-                          </p>
-                        </div>
-                        <div className="rounded-xl border border-border bg-card p-4">
-                          <h3 className="text-sm text-muted-foreground">Pior Turno</h3>
-                          <p className="text-3xl font-bold text-foreground mt-3">
-                            {historicoData?.piorTurno?.nome ?? '—'}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {historicoData?.piorTurno ? `${historicoData.piorTurno.oee.toFixed(1)}%` : '—'}
-                          </p>
-                        </div>
+                        {historicoTurnosOrdenados.length > 0 ? (
+                          historicoTurnosOrdenados.map((turno) => (
+                            <div key={turno.turno_id} className="rounded-xl border border-border bg-card p-4">
+                              <div className="flex items-center justify-between gap-2">
+                                <h3 className="text-sm text-muted-foreground">{turno.turno_nome}</h3>
+                                {historicoData?.melhorTurno?.nome === turno.turno_nome && (
+                                  <Badge variant="outline" className="bg-success/10 text-success border-success/20 text-[10px] px-1.5 py-0">
+                                    Melhor
+                                  </Badge>
+                                )}
+                                {historicoData?.piorTurno?.nome === turno.turno_nome &&
+                                  historicoData.piorTurno.nome !== historicoData.melhorTurno?.nome && (
+                                    <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 text-[10px] px-1.5 py-0">
+                                      Pior
+                                    </Badge>
+                                  )}
+                              </div>
+                              <p className={cn("text-3xl font-bold mt-3", getOEEColor(turno.media_oee))}>
+                                {turno.dados.length > 0 ? `${turno.media_oee.toFixed(1)}%` : '—'}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {turno.dados.length > 0 ? `${turno.dados.length} dia${turno.dados.length !== 1 ? 's' : ''} com registro` : 'Sem registros'}
+                              </p>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="col-span-3 rounded-xl border border-border bg-card p-4 flex items-center justify-center text-muted-foreground text-sm">
+                            Sem dados de turno para o período selecionado
+                          </div>
+                        )}
                       </div>
 
                       <div className="h-[320px]">

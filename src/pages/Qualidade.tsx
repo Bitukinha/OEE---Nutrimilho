@@ -36,7 +36,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { useProdutosBloqueados, useDeleteProdutoBloqueado, useQualidadeMetrics } from '@/hooks/useProdutosBloqueados';
+import { useProdutosBloqueados, useDeleteProdutoBloqueado } from '@/hooks/useProdutosBloqueados';
 import { useOEEPorTurno } from '@/hooks/useOEEPorTurno';
 import { useTurnos } from '@/hooks/useTurnos';
 import { exportQualidadeReport } from '@/lib/pdfExport';
@@ -54,7 +54,6 @@ const Qualidade = () => {
     dataFim: dataFim || undefined,
     turnoId: turnoId || undefined,
   });
-  const { data: metrics } = useQualidadeMetrics();
   const { data: oeeData } = useOEEPorTurno(dataInicio || undefined, dataFim || undefined);
   const { data: turnos } = useTurnos();
   const deleteMutation = useDeleteProdutoBloqueado();
@@ -62,6 +61,17 @@ const Qualidade = () => {
   // Calcular impacto estimado no OEE
   const qualidadeAtual = oeeData?.geral?.qualidade || 0;
   const oeeAtual = oeeData?.geral?.oee || 0;
+
+  // Métricas derivadas dos mesmos "produtos" já filtrados pela tela (data/turno),
+  // para que os cards, o Pareto e o PDF sempre reflitam o mesmo recorte selecionado.
+  const metrics = useMemo(() => {
+    const totalBloqueado = produtos?.reduce((acc, p) => acc + p.quantidade, 0) || 0;
+    const porDestino: Record<string, number> = {};
+    produtos?.forEach((p) => {
+      porDestino[p.destino] = (porDestino[p.destino] || 0) + p.quantidade;
+    });
+    return { totalBloqueado, porDestino };
+  }, [produtos]);
 
   // Calcular métricas por motivo para o PDF
   const porMotivo = useMemo(() => {

@@ -141,7 +141,7 @@ export const useRegistrosProducao = (filters?: { dataInicio?: string; dataFim?: 
         const unidadesBoas = Math.max(0, (r.total_produzido || 0) - bloqueadosProporcional);
         const qualidade = r.total_produzido > 0
           ? Math.max(0, (unidadesBoas / r.total_produzido) * 100)
-          : 0;
+          : 100;
 
         const oee = ((disponibilidade / 100) * (performance / 100) * (qualidade / 100)) * 100;
 
@@ -300,55 +300,3 @@ export const useDeleteRegistroProducao = () => {
   });
 };
 
-export const useOEEMetrics = () => {
-  return useQuery({
-    queryKey: ['oee_metrics'],
-    queryFn: async () => {
-      // Fetch latest registros including paradas and related meta to compute metrics client-side
-      const { data: registros, error } = await supabase
-        .from('registros_producao')
-        .select(`
-          *,
-          paradas (id, duracao, registro_id),
-          equipamentos (capacidade_hora),
-          turnos (id, nome, hora_inicio, hora_fim)
-        `)
-        .order('data', { ascending: false })
-        .limit(30);
-
-      if (error) throw error;
-
-      if (!registros || registros.length === 0) {
-        return { disponibilidade: 0, performance: 0, qualidade: 0, oee: 0 };
-      }
-
-      const sums = registros.reduce((acc, r: any) => {
-        const paradasSum = r.paradas?.reduce((a: number, p: any) => a + (p.duracao || 0), 0) || 0;
-        const turno = (r.turnos as { hora_inicio?: string; hora_fim?: string } | null) ?? null;
-        const tempoPlanejado = turno?.hora_inicio && turno?.hora_fim
-          ? calcularTempoPlanejadoTurnoMinutos(turno.hora_inicio, turno.hora_fim)
-          : Number(r.tempo_planejado || 0);
-        const disponibilidade = calcularDisponibilidadeComParadas(tempoPlanejado, paradasSum);
-        const metaKg = (r.equipamentos && r.equipamentos.capacidade_hora) || r.capacidade_hora || 0;
-        const performance = metaKg > 0 ? Math.min(100, (r.total_produzido / metaKg) * 100) : 0;
-        const unidadesBoas = Math.max(0, (r.total_produzido - (r.defeitos || 0)));
-        const qualidade = r.total_produzido > 0 ? Math.max(0, (unidadesBoas / r.total_produzido) * 100) : 0;
-        const oee = ((disponibilidade / 100) * (performance / 100) * (qualidade / 100)) * 100;
-
-        acc.disponibilidade += disponibilidade;
-        acc.performance += performance;
-        acc.qualidade += qualidade;
-        acc.oee += oee;
-        return acc;
-      }, { disponibilidade: 0, performance: 0, qualidade: 0, oee: 0 });
-
-      const len = registros.length;
-      return {
-        disponibilidade: Number((sums.disponibilidade / len).toFixed(1)),
-        performance: Number((sums.performance / len).toFixed(1)),
-        qualidade: Number((sums.qualidade / len).toFixed(1)),
-        oee: Number((sums.oee / len).toFixed(1)),
-      };
-    },
-  });
-};

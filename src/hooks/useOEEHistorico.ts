@@ -121,7 +121,7 @@ export const useOEEHistorico = (dias: number = 30, range?: OEEHistoricoRange) =>
           const perf = metaKg > 0 ? Math.min((r.total_produzido / metaKg) * 100, 100) : (r.total_produzido > 0 ? 100 : 0);
           // Qualidade só é afetada por produtos bloqueados (não por meta não atingida)
           const unidadesBoas = Math.max(0, r.total_produzido - bloqProp);
-          const qual = r.total_produzido > 0 ? Math.max(0, (unidadesBoas / r.total_produzido) * 100) : 0;
+          const qual = r.total_produzido > 0 ? Math.max(0, (unidadesBoas / r.total_produzido) * 100) : 100;
 
           totalDisp += disp;
           totalPerf += perf;
@@ -169,7 +169,7 @@ export const useOEEHistorico = (dias: number = 30, range?: OEEHistoricoRange) =>
             const perf = metaKg > 0 ? Math.min((r.total_produzido / metaKg) * 100, 100) : (r.total_produzido > 0 ? 100 : 0);
             // Qualidade só é afetada por produtos bloqueados (não por meta não atingida)
             const unidadesBoas = Math.max(0, r.total_produzido - bloqProp);
-            const qual = r.total_produzido > 0 ? Math.max(0, (unidadesBoas / r.total_produzido) * 100) : 0;
+            const qual = r.total_produzido > 0 ? Math.max(0, (unidadesBoas / r.total_produzido) * 100) : 100;
 
             totalDisp += disp;
             totalPerf += perf;

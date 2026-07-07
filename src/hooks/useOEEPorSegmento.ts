@@ -146,7 +146,7 @@ export const useOEEPorSegmento = (dataInicio?: string, dataFim?: string) => {
               // Qualidade só é afetada por produtos bloqueados (não por defeitos manuais)
               const bloqProp = regs.length > 0 ? (bloqueadosPorEquipamento[equipId] || 0) / regs.length : 0;
               const unidadesBoas = Math.max(0, unidadesReais - bloqProp);
-              const qual = unidadesReais > 0 ? (unidadesBoas / unidadesReais) * 100 : 0;
+              const qual = unidadesReais > 0 ? (unidadesBoas / unidadesReais) * 100 : 100;
 
               totalDisp += disp;
               totalPerf += perf;

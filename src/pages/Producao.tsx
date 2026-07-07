@@ -31,7 +31,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { useRegistrosProducao, useDeleteRegistroProducao, useOEEMetrics } from '@/hooks/useRegistrosProducao';
+import { useRegistrosProducao, useDeleteRegistroProducao } from '@/hooks/useRegistrosProducao';
 import { useEquipamentos } from '@/hooks/useEquipamentos';
 import RegistroProducaoForm from '@/components/oee/RegistroProducaoForm';
 import { exportOEEReport } from '@/lib/pdfExport';
@@ -50,7 +50,6 @@ const Producao = () => {
   }>({});
   
   const { data: registros, isLoading } = useRegistrosProducao(filters);
-  const { data: metrics } = useOEEMetrics();
   const { data: equipamentos } = useEquipamentos();
   const { data: turnos } = useTurnos();
   const deleteMutation = useDeleteRegistroProducao();
@@ -63,9 +62,11 @@ const Producao = () => {
   };
 
   const handleExportPDF = async () => {
-    if (!registros || !metrics) return;
+    if (!registros) return;
     const equipamento = equipamentos?.find(e => e.id === filters.equipamentoId);
-    await exportOEEReport(registros, metrics, {
+    // O resumo do PDF é calculado a partir dos mesmos "registros" filtrados exibidos na tela,
+    // então reflete exatamente o que está sendo visto (não um recorte separado e desatualizado).
+    await exportOEEReport(registros, {
       dataInicio: filters.dataInicio,
       dataFim: filters.dataFim,
       equipamento: equipamento?.nome,

@@ -4,16 +4,8 @@ import { format, parseISO } from 'date-fns';
 import { RegistroProducao } from '@/hooks/useRegistrosProducao';
 import logoNutrimilho from '@/assets/logo-nutrimilho.png';
 
-interface OEEMetrics {
-  disponibilidade: number;
-  performance: number;
-  qualidade: number;
-  oee: number;
-}
-
 export const exportOEEReport = async (
   registros: RegistroProducao[],
-  metrics: OEEMetrics,
   filters?: { dataInicio?: string; dataFim?: string; equipamento?: string }
 ) => {
   const doc = new jsPDF();

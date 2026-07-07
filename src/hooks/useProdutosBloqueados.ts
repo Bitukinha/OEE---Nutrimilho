@@ -174,37 +174,3 @@ export const useDeleteProdutoBloqueado = () => {
   });
 };
 
-// Hook para métricas de qualidade
-export const useQualidadeMetrics = () => {
-  return useQuery({
-    queryKey: ['qualidade_metrics'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('produtos_bloqueados')
-        .select('quantidade, destino, motivo_bloqueio');
-      if (error) {
-        console.warn('Erro ao buscar métricas de qualidade:', error);
-        return { totalBloqueado: 0, porDestino: {}, porMotivo: {} };
-      }
-      const total = data?.reduce((acc, item) => acc + item.quantidade, 0) || 0;
-      
-      // Agrupar por destino
-      const porDestino: Record<string, number> = {};
-      data?.forEach(item => {
-        porDestino[item.destino] = (porDestino[item.destino] || 0) + item.quantidade;
-      });
-      
-      // Agrupar por motivo
-      const porMotivo: Record<string, number> = {};
-      data?.forEach(item => {
-        porMotivo[item.motivo_bloqueio] = (porMotivo[item.motivo_bloqueio] || 0) + item.quantidade;
-      });
-      
-      return {
-        totalBloqueado: total,
-        porDestino,
-        porMotivo,
-      };
-    },
-  });
-};
