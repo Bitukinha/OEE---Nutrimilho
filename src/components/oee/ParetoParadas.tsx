@@ -87,7 +87,7 @@ const ParetoParadas = ({ dataInicio, dataFim, turnoId }: ParetoParadasProps = {}
             Nenhuma parada registrada
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={420}>
             <ComposedChart data={paretoData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis 
