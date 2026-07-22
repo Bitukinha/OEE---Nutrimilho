@@ -73,17 +73,17 @@ const Historico = () => {
       {/* Header */}
       <header className="bg-primary text-primary-foreground shadow-lg">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-4">
               <Link to="/">
                 <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
               </Link>
-              <h1 className="text-2xl font-bold">Histórico OEE</h1>
+              <h1 className="text-xl sm:text-2xl font-bold">Histórico OEE</h1>
             </div>
             <Select value={periodo} onValueChange={(v) => setPeriodo(v as PeriodoOption)}>
-              <SelectTrigger className="w-[180px] bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground">
+              <SelectTrigger className="w-full sm:w-[180px] bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
