@@ -76,6 +76,11 @@ const Historico = () => {
 
   const { data, isLoading } = useOEEHistorico(dias, range);
 
+  const mediaGeral = useMemo(() => {
+    if (!data?.geral || data.geral.length === 0) return null;
+    return data.geral.reduce((sum, item) => sum + item.oee, 0) / data.geral.length;
+  }, [data?.geral]);
+
   const formatDate = (dateStr: string) => {
     const [year, month, day] = dateStr.split('-');
     return `${day}/${month}`;
@@ -253,6 +258,30 @@ const Historico = () => {
 
             {/* Cards por Turno */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {mediaGeral !== null && (
+                <Card className="relative overflow-hidden border-primary/30">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Média Geral</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex items-baseline gap-2">
+                        <span
+                          className="text-3xl font-bold"
+                          style={{ color: getOEEColor(mediaGeral) }}
+                        >
+                          {mediaGeral.toFixed(1)}%
+                        </span>
+                        <span className="text-sm text-muted-foreground">OEE médio</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {data.geral.length} dia{data.geral.length !== 1 ? 's' : ''} com registro
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
               {data?.porTurno.map((turno) => (
                 <Card key={turno.turno_id} className="relative overflow-hidden">
                   <div 
