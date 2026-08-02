@@ -196,15 +196,24 @@ export const useOEEPorTurno = (dataInicio?: string, dataFim?: string) => {
       const turnosComRegistros = oeePorTurno.filter(t => t.total_registros > 0);
       const totalRegistros = turnosComRegistros.reduce((acc, t) => acc + t.total_registros, 0);
 
+      const disponibilidadeGeral = totalRegistros > 0
+        ? turnosComRegistros.reduce((acc, t) => acc + t.disponibilidade * t.total_registros, 0) / totalRegistros
+        : 0;
+      const performanceGeral = totalRegistros > 0
+        ? turnosComRegistros.reduce((acc, t) => acc + t.performance * t.total_registros, 0) / totalRegistros
+        : 0;
+      const qualidadeGeral = totalRegistros > 0
+        ? turnosComRegistros.reduce((acc, t) => acc + t.qualidade * t.total_registros, 0) / totalRegistros
+        : 0;
+
+      // OEE Geral = D × P × Q / 10000, calculado a partir dos valores gerais acima
+      // (e não como média ponderada dos OEE de cada turno), para ficar consistente
+      // com os cards de Disponibilidade/Performance/Qualidade exibidos ao lado.
       const oeeGeral: OEEGeral = totalRegistros > 0 ? {
-        disponibilidade: Number((turnosComRegistros.reduce((acc, t) => 
-          acc + t.disponibilidade * t.total_registros, 0) / totalRegistros).toFixed(1)),
-        performance: Number((turnosComRegistros.reduce((acc, t) => 
-          acc + t.performance * t.total_registros, 0) / totalRegistros).toFixed(1)),
-        qualidade: Number((turnosComRegistros.reduce((acc, t) => 
-          acc + t.qualidade * t.total_registros, 0) / totalRegistros).toFixed(1)),
-        oee: Number((turnosComRegistros.reduce((acc, t) => 
-          acc + t.oee * t.total_registros, 0) / totalRegistros).toFixed(1)),
+        disponibilidade: Number(disponibilidadeGeral.toFixed(1)),
+        performance: Number(performanceGeral.toFixed(1)),
+        qualidade: Number(qualidadeGeral.toFixed(1)),
+        oee: Number(((disponibilidadeGeral * performanceGeral * qualidadeGeral) / 10000).toFixed(1)),
       } : { disponibilidade: 0, performance: 0, qualidade: 0, oee: 0 };
 
         return {
