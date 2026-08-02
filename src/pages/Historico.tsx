@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { format, startOfMonth, startOfYear } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfYear } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ArrowLeft, TrendingUp, TrendingDown, Minus, Trophy, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,7 +27,7 @@ const TendenciaIcon = ({ tendencia }: { tendencia: 'up' | 'down' | 'stable' }) =
   return <Minus className="h-5 w-5 text-muted-foreground" />;
 };
 
-type PeriodoOption = '7' | '15' | '30' | '60' | 'mes_atual' | 'ano_atual';
+type PeriodoOption = '7' | '15' | '30' | '60' | 'mes_atual' | 'mes_especifico' | 'ano_atual';
 
 const PERIODO_LABELS: Record<PeriodoOption, string> = {
   '7': 'Últimos 7 dias',
@@ -35,11 +35,13 @@ const PERIODO_LABELS: Record<PeriodoOption, string> = {
   '30': 'Últimos 30 dias',
   '60': 'Últimos 60 dias',
   mes_atual: 'Mês atual',
+  mes_especifico: 'Escolher mês',
   ano_atual: 'Ano atual',
 };
 
 const Historico = () => {
   const [periodo, setPeriodo] = useState<PeriodoOption>('30');
+  const [mesEscolhido, setMesEscolhido] = useState(() => format(new Date(), 'yyyy-MM'));
 
   const { dias, range, descricaoPeriodo } = useMemo(() => {
     const hoje = new Date();
@@ -48,6 +50,17 @@ const Historico = () => {
         dias: 30,
         range: { inicio: format(startOfMonth(hoje), 'yyyy-MM-dd'), fim: format(hoje, 'yyyy-MM-dd') },
         descricaoPeriodo: 'no mês atual',
+      };
+    }
+    if (periodo === 'mes_especifico') {
+      const [ano, mes] = mesEscolhido.split('-').map(Number);
+      const inicioMes = new Date(ano, mes - 1, 1);
+      const fimMes = endOfMonth(inicioMes);
+      const fim = fimMes > hoje ? hoje : fimMes;
+      return {
+        dias: 31,
+        range: { inicio: format(inicioMes, 'yyyy-MM-dd'), fim: format(fim, 'yyyy-MM-dd') },
+        descricaoPeriodo: `em ${format(inicioMes, "MMMM 'de' yyyy", { locale: ptBR })}`,
       };
     }
     if (periodo === 'ano_atual') {
@@ -59,7 +72,7 @@ const Historico = () => {
     }
     const diasSelecionados = Number(periodo);
     return { dias: diasSelecionados, range: undefined, descricaoPeriodo: `nos últimos ${diasSelecionados} dias` };
-  }, [periodo]);
+  }, [periodo, mesEscolhido]);
 
   const { data, isLoading } = useOEEHistorico(dias, range);
 
@@ -82,19 +95,31 @@ const Historico = () => {
               </Link>
               <h1 className="text-xl sm:text-2xl font-bold">Histórico OEE</h1>
             </div>
-            <Select value={periodo} onValueChange={(v) => setPeriodo(v as PeriodoOption)}>
-              <SelectTrigger className="w-full sm:w-[180px] bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7">{PERIODO_LABELS['7']}</SelectItem>
-                <SelectItem value="15">{PERIODO_LABELS['15']}</SelectItem>
-                <SelectItem value="30">{PERIODO_LABELS['30']}</SelectItem>
-                <SelectItem value="60">{PERIODO_LABELS['60']}</SelectItem>
-                <SelectItem value="mes_atual">{PERIODO_LABELS.mes_atual}</SelectItem>
-                <SelectItem value="ano_atual">{PERIODO_LABELS.ano_atual}</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Select value={periodo} onValueChange={(v) => setPeriodo(v as PeriodoOption)}>
+                <SelectTrigger className="w-full sm:w-[180px] bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7">{PERIODO_LABELS['7']}</SelectItem>
+                  <SelectItem value="15">{PERIODO_LABELS['15']}</SelectItem>
+                  <SelectItem value="30">{PERIODO_LABELS['30']}</SelectItem>
+                  <SelectItem value="60">{PERIODO_LABELS['60']}</SelectItem>
+                  <SelectItem value="mes_atual">{PERIODO_LABELS.mes_atual}</SelectItem>
+                  <SelectItem value="mes_especifico">{PERIODO_LABELS.mes_especifico}</SelectItem>
+                  <SelectItem value="ano_atual">{PERIODO_LABELS.ano_atual}</SelectItem>
+                </SelectContent>
+              </Select>
+              {periodo === 'mes_especifico' && (
+                <input
+                  type="month"
+                  value={mesEscolhido}
+                  max={format(new Date(), 'yyyy-MM')}
+                  onChange={(e) => setMesEscolhido(e.target.value)}
+                  className="w-full sm:w-[180px] rounded-md border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-2 text-sm text-primary-foreground [color-scheme:dark]"
+                />
+              )}
+            </div>
           </div>
         </div>
       </header>
