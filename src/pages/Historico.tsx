@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useOEEHistorico } from '@/hooks/useOEEHistorico';
+import OEESegmentoMensal from '@/components/oee/OEESegmentoMensal';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, Cell, ReferenceLine } from 'recharts';
 
 const TURNO_COLORS: Record<string, string> = {
@@ -372,6 +373,9 @@ const Historico = () => {
             </Card>
           </>
         )}
+
+        {/* Dashboard mensal por segmento (tem filtro de mês próprio) */}
+        <OEESegmentoMensal />
       </main>
     </div>
   );
