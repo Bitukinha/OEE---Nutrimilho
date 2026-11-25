@@ -335,12 +335,27 @@ const Historico = () => {
                 {data?.porTurno && data.porTurno.some(t => t.dados.length > 0) ? (
                   <div className="h-[350px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart>
+                      <LineChart
+                        data={(() => {
+                          // Junta os turnos numa única série ordenada por data,
+                          // para o eixo X não ficar fora de ordem quando um turno não tem registro em algum dia
+                          const porData = new Map<string, Record<string, string | number>>();
+                          data.porTurno.forEach((turno) => {
+                            turno.dados.forEach((d) => {
+                              const linha = porData.get(d.data) ?? { data: d.data };
+                              linha[`oee_${turno.turno_id}`] = d.oee;
+                              porData.set(d.data, linha);
+                            });
+                          });
+                          return Array.from(porData.values()).sort((a, b) =>
+                            String(a.data).localeCompare(String(b.data)),
+                          );
+                        })()}
+                      >
                         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                        <XAxis 
-                          dataKey="data" 
+                        <XAxis
+                          dataKey="data"
                           tickFormatter={formatDate}
-                          allowDuplicatedCategory={false}
                         />
                         <YAxis domain={[0, 100]} />
                         <Tooltip 
@@ -352,9 +367,9 @@ const Historico = () => {
                         {data.porTurno.filter(t => t.dados.length > 0).map((turno) => (
                           <Line 
                             key={turno.turno_id}
-                            data={turno.dados}
-                            type="monotone" 
-                            dataKey="oee" 
+                            type="monotone"
+                            dataKey={`oee_${turno.turno_id}`}
+                            connectNulls
                             name={turno.turno_nome}
                             stroke={TURNO_COLORS[turno.turno_nome] || 'hsl(var(--primary))'}
                             strokeWidth={2}
